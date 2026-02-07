@@ -18,7 +18,11 @@ const swaggerDocument = require("./swagger-output.json");*/
 const app = express();
 
 //Middleware
-app.use(cors());
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -30,12 +34,14 @@ app.use(express.urlencoded({ extended: true }));
 
 //Authentication, Authorization
 app.use(session({
-    secret: "supersecret",
+    secret: process.env.SESSION_SECRET || "supersecret",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
-        httpOnly: true,
-        secure: false //CHANGE WENN PUBLIISHING TO TRUE
+httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Automatisch true auf Render
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Wichtig für Cross-Origin
+        maxAge: 24 * 60 * 60 * 1000 // 24 Stunden
     }
 }));
 
@@ -68,7 +74,7 @@ app.post("/login", (req, res) => {
 
     const foundUser = users.find(user => user.username === username && user.password === password);
     if (!foundUser) {
-        return res.status(401).json({ error: "no such user" });
+        return res.status(401).json({ error: "Wrong credentials or no such user" });
     }
 
     req.session.username = req.body.username;
@@ -87,8 +93,12 @@ app.delete("/logout", (req, res) => {
     if (!req.session.username) {
         return res.sendStatus(422);
     }
-    req.session.username = undefined;
-    res.send("success")
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ error: "Logout failed (how'd'ya manage that lol)" });
+        }
+        res.json({ message: "Succesful logout" });
+    });
 });
 
 app.get('/', (req, res) => {
@@ -159,10 +169,20 @@ ws.on("message", (msg) => {
          if (!result.ok) return; 
          
          ws.game.players.forEach(p => 
-            p.send(JSON.stringify({ type: "update", x: data.x, y: data.y, color: result.color 
-
+            p.send(JSON.stringify({ 
+                type: "update", 
+                x: data.x, 
+                y: data.y, 
+                color: result.color 
             })) 
         ); 
     } 
 }); 
+ws.on("close", () => {
+        // Delete from waiting list
+        const idx = waiting.indexOf(ws);
+        if (idx !== -1) {
+            waiting.splice(idx, 1);
+        }
+    });
 });
