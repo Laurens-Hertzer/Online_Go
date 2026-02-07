@@ -20,7 +20,7 @@
   "main": "server.js",
   "scripts": {
     "test": "node server.js",
-    "start": "node server.js"
+    "start": "node Backend/server.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
