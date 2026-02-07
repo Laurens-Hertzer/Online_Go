@@ -16,13 +16,51 @@ const swaggerDocument = require("./swagger-output.json");*/
 );*/
 
 //Definitions
-
 const app = express();
 
+//DB
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+
+async function initDatabase() {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Füge Test-User hinzu falls Tabelle leer ist
+        const result = await pool.query('SELECT COUNT(*) FROM users');
+        if (result.rows[0].count === '0') {
+            const testUsers = [
+                { username: "test", password: "1" },
+                { username: "test2", password: "2" },
+                { username: "test3", password: "3" }
+            ];
+            
+            for (const user of testUsers) {
+                const hash = await bcrypt.hash(user.password, 10);
+                await pool.query(
+                    'INSERT INTO users (username, password_hash) VALUES ($1, $2)',
+                    [user.username, hash]
+                );
+            }
+            console.log('Test-User erstellt');
+        }
+        
+        console.log('Datenbank initialisiert');
+    } catch (err) {
+        console.error('Fehler beim Initialisieren der Datenbank:', err);
+    }
+}
+
+initDatabase();
 
 //Middleware
 app.use(cors({
