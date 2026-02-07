@@ -7,13 +7,6 @@ const cors = require("cors");
 const path = require("path");
 const WebSocket = require("ws")
 
-/*const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = require("./swagger-output.json");*/
-/*app.use(
-  "/swagger-ui",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument)
-);*/
 
 //Definitions
 const app = express();
@@ -35,7 +28,6 @@ async function initDatabase() {
             )
         `);
         
-        // Füge Test-User hinzu falls Tabelle leer ist
         const result = await pool.query('SELECT COUNT(*) FROM users');
         if (result.rows[0].count === '0') {
             const testUsers = [
@@ -71,59 +63,98 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//Routing
-//app.use("/gamecontrol" , gamecontrol);
-
-//Correct ID placement, needed later for correct saving of games, users, etc.
-//const nextId = () => Math.max(...tasks.map((task) => task.id)) + 1;
-
 //Authentication, Authorization
 app.use(session({
+    store: new pgSession({
+        pool: pool,
+        tableName: 'session',
+        createTableIfMissing: true
+    }),
     secret: process.env.SESSION_SECRET || "supersecret",
     resave: false,
     saveUninitialized: false,
-    cookie: {
-httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Automatisch true auf Render
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Wichtig für Cross-Origin
-        maxAge: 24 * 60 * 60 * 1000 // 24 Stunden
+        cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Auto true in Render
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-Origin
+        maxAge: 24 * 60 * 60 * 1000 // 24h
     }
 }));
 
-const users = [
-    { username: "test" , password: "1" },
-    { username: "test2", password: "2" },
-    { username: "test3", password: "3" }
-]
-
-app.post("/register", (req, res) => {
+app.post("/register", async(req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
         return res.status(422).json({ error: "You have to put in all the required inputs." })
     }
-    if (!req.session.createdAccounts) {
-        req.session.createdAccounts = 0;
-    } 
-    if (req.session.createdAccounts >= 5) {
-        return res.status(429).json({ error: "Maximale Anzahl an Accounts erreicht, du brauchst nicht so viele." });
+    
+    if (username.length < 3) {
+        return res.status(422).json({ error: "Username has to be bigger then 3 letters." });
     }
-    users.push({... {username, password} });
-    req.session.createdAccounts++;
-    res.json({ message: "Account erstellt" });
+    if (password.length < 1) {
+        return res.status(422).json({ error: "Passwort too short, not so difficult to remember a bigger one, I trust u ;)." });
+    }
+
+    try {
+        // Prüfe ob Username bereits existiert
+        const existingUser = await pool.query(
+            'SELECT id FROM users WHERE username = $1',
+            [username]
+        );
+
+        if (existingUser.rows.length > 0) {
+            return res.status(409).json({ error: "Username bereits vergeben" });
+        }
+
+        // Hash Passwort
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // Speichere User in DB
+        await pool.query(
+            'INSERT INTO users (username, password_hash) VALUES ($1, $2)',
+            [username, passwordHash]
+        );
+
+        res.json({ message: "Account erfolgreich erstellt" });
+    } catch (err) {
+        console.error('Registrierungsfehler:', err);
+        res.status(500).json({ error: "Serverfehler bei Registrierung" });
+    }
 });
 
-app.post("/login", (req, res) => {
-    // #swagger.tags = ['Auth']
+app.post("/login", async(req, res) => {
     const { username, password } = req.body;
 
-    const foundUser = users.find(user => user.username === username && user.password === password);
-    if (!foundUser) {
-        return res.status(401).json({ error: "Wrong credentials or no such user" });
+    if (!username || !password) {
+        return res.status(422).json({ error: "I need your credentials twin." })
     }
 
-    req.session.username = req.body.username;
-    res.json({ message: "sucess" });
+    try {
+        const result = await pool.query(
+            'SELECT id, password_hash FROM users WHERE username = $1',
+            [username]
+        );
+
+        if (result.rows.lenght === 0) {
+            return res.status(401).json({ error: "Wrong username or password" });
+        }
+
+        const user = result.rows[0];
+
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: "Wrong username or password" });
+        }
+
+        req.session.userId = user.id;
+        req.session.username = user.username;
+
+        res.json({ message: "success", username: user.username });
+    } catch (err) {
+        console.error('Login-Fehler:', err);
+        res.status(500).json({ error: "Serverfehler beim Login" });
+    }
+
 });
 
 app.get("/verify", (req, res) => {
@@ -157,7 +188,7 @@ app.get('/', (req, res) => {
 // All static files (CSS, JS, Pictures)
 app.use(express.static(path.join(__dirname, '../Frontend')));
 
-// Catch-All für SPA (anti404 when reloading)
+// Catch-All for SPA (anti404 when reloading)
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/index.html")); 
 });
@@ -190,7 +221,6 @@ class Game {
 }
 
 // WebSocket Handling
-
 wss.on("connection", (ws) => {
     if (waiting.length === 0) {
         waiting.push(ws);
@@ -207,6 +237,7 @@ wss.on("connection", (ws) => {
         ws.send(JSON.stringify({ type: "start", color: "black" }));
         opponent.send(JSON.stringify({ type: "start", color: "white" }));
     }
+
 ws.on("message", (msg) => { 
     const data = JSON.parse(msg); 
     if (data.type === "move") {
@@ -223,6 +254,7 @@ ws.on("message", (msg) => {
         ); 
     } 
 }); 
+
 ws.on("close", () => {
         // Delete from waiting list
         const idx = waiting.indexOf(ws);
