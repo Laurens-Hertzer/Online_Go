@@ -223,7 +223,7 @@ class Game {
 
 // WebSocket Handling
 wss.on("connection", (ws) => {
-    sendGameList(ws);
+    sendGamesList(ws);
 
     ws.on("message", (msg) => { 
         try {
@@ -246,15 +246,15 @@ wss.on("connection", (ws) => {
                     game.player1.send(JSON.stringify({ type: "start", color: "black" }));
                     game.player2.send(JSON.stringify({ type: "start", color: "white" }));
 
-                    broadcastGameList();
+                    broadcastGamesList();
             }
         }
 
-            if (data.action === "move") {
+            if (data.type === "move") {
                 const game = ws.currentGame;
                 const result = game.playMove(data.x, data.y);
 
-                if (result.ok) return;
+                if (!result.ok) return;
 
                 const moveData = JSON.stringify({
                     type: "update",
