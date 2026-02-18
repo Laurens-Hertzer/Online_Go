@@ -5,7 +5,7 @@ const pgSession = require("connect-pg-simple")(session);
 const { Pool } = require("pg");
 const cors = require("cors");
 const path = require("path");
-const WebSocket = require("ws")
+const WebSocket = require("ws");
 const bcrypt = require("bcrypt");
 
 //Definitions
@@ -31,7 +31,7 @@ async function initDatabase() {
         const result = await pool.query('SELECT COUNT(*) FROM users');
         if (result.rows[0].count === '0') {
             const testUsers = [
-                { username: "test", password: "1" },
+                { username: "test" , password: "1" },
                 { username: "test2", password: "2" },
                 { username: "test3", password: "3" }
             ];
@@ -179,7 +179,7 @@ app.get('/', (req, res) => {
     if (!req.session.username){
         res.sendFile(path.join(__dirname, '../Frontend', 'login.html'));
     }else{
-        res.sendFile(path.join(__dirname, '../Frontend', 'index.html'));
+        res.sendFile(path.join(__dirname, '../Frontend', 'lobby.html'));
     }
 });
 
@@ -198,10 +198,13 @@ const server = app.listen(process.env.PORT || 3000, () => {
 const wss = new WebSocket.Server({ server });
 
 // Matchmaking
+const games = [];
 const waiting = [];
 
 class Game {
-    constructor() {
+    constructor(ws) {
+        this.player1 = ws;
+        this.player2 = null;
         this.board = Array.from({ length: 19},  () => Array(19).fill(null));
         this.current = "black";
     }
@@ -220,44 +223,91 @@ class Game {
 
 // WebSocket Handling
 wss.on("connection", (ws) => {
-    if (waiting.length === 0) {
-        waiting.push(ws);
-        ws.send(JSON.stringify({ type: "waiting" }));
-    }else{
-        const opponent = waiting.shift();
-        const game = new Game();
+    sendGameList(ws);
 
-        ws.game = game;
-        opponent.game = game;
+    ws.on("message", (msg) => { 
+        try {
+            const data = JSON.parse(msg);
+            if (data.action === "create") {
+                const game = new Game(ws);
+                games.push(game);
+                ws.currentGame = game;
 
-        game.players = [ws, opponent];
+                broadcastGameList();
+            }
 
-        ws.send(JSON.stringify({ type: "start", color: "black" }));
-        opponent.send(JSON.stringify({ type: "start", color: "white" }));
+           if (data.action === "join") {
+                const game = games[data.gameIndex];
+
+                if (game && !game.player2) {
+                    game.player2 = ws;
+                    ws.currentGame = game;
+                    
+                    game.player1.send(JSON.stringify({ type: "start", color: "black" }));
+                    game.player2.send(JSON.stringify({ type: "start", color: "white" }));
+
+                    broadcastGameList();
+            }
+        }
+
+            if (data.action === "move") {
+                const game = ws.currentGame;
+                const result = game.playMove(data.x, data.y);
+
+                if (result.ok) return;
+
+                const moveData = JSON.stringify({
+                    type: "update",
+                    x: data.x,
+                    y: data.y,
+                    color: result.color
+                });
+
+                game.player1.send(moveData);
+                if (game.player2) game.player2.send(moveData);
+            }
+
+    } catch (err) {
+        console.error("Fehler beim Verarbeiten der Nachricht:", err);
     }
-
-ws.on("message", (msg) => { 
-    const data = JSON.parse(msg); 
-    if (data.type === "move") {
-         const result = ws.game.playMove(data.x, data.y); 
-         if (!result.ok) return; 
-         
-         ws.game.players.forEach(p => 
-            p.send(JSON.stringify({ 
-                type: "update", 
-                x: data.x, 
-                y: data.y, 
-                color: result.color 
-            })) 
-        ); 
-    } 
 }); 
 
 ws.on("close", () => {
-        // Delete from waiting list
-        const idx = waiting.indexOf(ws);
-        if (idx !== -1) {
-            waiting.splice(idx, 1);
+        
+        for (let i = games.length - 1; i >= 0; i--) {
+            if (games[i].player1 === ws || games[i].player2 === ws) {
+                console.log("Deleting Game", i);
+                games.splice(i, 1);
+            }
         }
+        
+        broadcastGamesList();
     });
 });
+
+function sendGamesList(ws) {
+    const gamesList = games.map(g => ({
+        player1: g.player1 ? 'Spieler' : null,
+        player2: g.player2 ? 'Spieler' : null
+    }));
+    
+    ws.send(JSON.stringify({ games: gamesList }));
+}
+
+// Sende Spieleliste an ALLE Clients
+function broadcastGamesList() {
+    const gamesList = games.map(g => ({
+        player1: g.player1 ? 'Spieler' : null,
+        player2: g.player2 ? 'Spieler' : null
+    }));
+    
+    const message = JSON.stringify({ games: gamesList });
+    
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    });
+    
+    console.log("📤 Spieleliste gesendet:", gamesList.length, "Spiele");
+}

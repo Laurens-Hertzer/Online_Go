@@ -1,5 +1,6 @@
 const svg = document.getElementById("goboard");
-const socket = new WebSocket(`wss://${location.host}`);
+const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const socket = new WebSocket(`${protocol}//${location.host}`);
 
 // Linien erzeugen
 for (let i = 0; i < 19; i++) {
@@ -23,14 +24,6 @@ socket.onmessage = (msg) => {
 
   if (data.type === "update") {
     placeStone(data.x, data.y, data.color);
-  }
-
-  if (data.type === "waiting") {
-    console.log("Warte auf Gegner…");
-  }
-
-  if (data.type === "start") {
-    console.log("Spiel gestartet, deine Farbe:", data.color);
   }
 };
 
