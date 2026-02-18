@@ -199,10 +199,12 @@ const wss = new WebSocket.Server({ server });
 
 // Matchmaking
 const games = [];
+let gameIdCounter = 0;
 //const waiting = [];
 
 class Game {
     constructor(ws) {
+        this.id = 'game_${gameIdCounter++}';
         this.player1 = ws;
         this.player2 = null;
         this.board = Array.from({ length: 19},  () => Array(19).fill(null));
@@ -243,8 +245,16 @@ wss.on("connection", (ws) => {
                     game.player2 = ws;
                     ws.currentGame = game;
                     
-                    game.player1.send(JSON.stringify({ type: "start", color: "black" }));
-                    game.player2.send(JSON.stringify({ type: "start", color: "white" }));
+                    game.player1.send(JSON.stringify({
+                         type: "start", 
+                         color: "black",
+                         gameId: game.id 
+                        }));
+                    game.player2.send(JSON.stringify({
+                         type: "start",
+                        color: "white",
+                        gameId: game.id
+                     }));
 
                     broadcastGamesList();
             }

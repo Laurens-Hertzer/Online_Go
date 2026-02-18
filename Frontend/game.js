@@ -2,6 +2,8 @@ const svg = document.getElementById("goboard");
 const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const socket = new WebSocket(`${protocol}//${location.host}`);
 
+const gameId =sessionStorage.getItem("gameId");
+const myColor = sessionStorage.getItem("color");
 // Linien erzeugen
 for (let i = 0; i < 19; i++) {
   const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -18,6 +20,24 @@ for (let i = 0; i < 19; i++) {
   v.setAttribute("y2", 18);
   svg.appendChild(v);
 }
+
+socket.onopen = () => {
+  console.log('✅ WebSocket connected');
+  
+  // WICHTIG: Rejoin zum Spiel
+  if (gameId && myColor) {
+    console.log('📤 Sending rejoin for game:', gameId);
+    socket.send(JSON.stringify({ 
+      type: "rejoin", 
+      gameId: gameId,
+      color: myColor
+    }));
+  } else {
+    console.error('❌ Keine gameId oder color gespeichert!');
+    alert('Fehler: Keine Spiel-Information gefunden. Zurück zur Lobby.');
+    window.location.href = 'lobby.html';
+  }
+};
 
 socket.onmessage = (msg) => {
   const data = JSON.parse(msg.data);
