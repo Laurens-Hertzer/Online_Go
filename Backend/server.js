@@ -287,6 +287,26 @@ wss.on("connection", (ws) => {
                     game.player2.send(moveData);
                 }
             }
+            if (data.type === "rejoin") {
+            const game = games.find(g => g.id === data.gameId);
+
+            if (!game) {
+                console.log("Rejoin: Game not found", data.gameId);
+                return;
+            }
+
+            // Spieler anhand der Farbe zuordnen
+            if (data.color === "black") {
+                game.player1 = ws;
+            } else if (data.color === "white") {
+                game.player2 = ws;
+            }
+
+            ws.currentGame = game;
+
+            console.log("Player rejoined game:", data.gameId, "as", data.color);
+    }
+
 
     } catch (err) {
         console.error("Fehler beim Verarbeiten der Nachricht:", err);
