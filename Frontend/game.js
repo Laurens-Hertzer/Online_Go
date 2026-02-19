@@ -3,7 +3,7 @@ const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const socket = new WebSocket(`${protocol}//${location.host}`);
 
 const gameId =sessionStorage.getItem("gameId");
-const myColor = sessionStorage.getItem("color");
+const myColor = sessionStorage.getItem("myColor");
 // Linien erzeugen
 for (let i = 0; i < 19; i++) {
   const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
