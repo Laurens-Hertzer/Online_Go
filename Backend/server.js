@@ -55,6 +55,9 @@ async function initDatabase() {
 
 initDatabase();
 
+console.log("[ENV] NODE_ENV:", process.env.NODE_ENV);
+console.log("[ENV] ALLOWED_ORIGIN:", process.env.ALLOWED_ORIGIN);
+
 //Authentication, Authorization
 const sessionMiddleware = session({
     store: new pgSession({
