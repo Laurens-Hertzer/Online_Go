@@ -183,7 +183,7 @@ app.delete("/logout", (req, res) => {
 
 app.get('/', (req, res) => {
     if (!req.session.username){
-        res.sendFile(path.join(__dirname, '../Frontend', 'login.html'));
+        res.sendFile(path.join(__dirname, '../Frontend', 'index.html'));
     }else{
         res.sendFile(path.join(__dirname, '../Frontend', 'lobby.html'));
     }
@@ -202,7 +202,7 @@ app.use(express.static(path.join(__dirname, '../Frontend')));
 
 // Catch-All for SPA (anti404 when reloading)
 app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../Frontend/login.html")); 
+    res.sendFile(path.join(__dirname, "../Frontend/index.html")); 
 });
 
 const server = app.listen(process.env.PORT || 3000, () => {
