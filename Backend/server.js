@@ -162,7 +162,7 @@ app.post("/login", async(req, res) => {
 });
 
 app.get("/verify", (req, res) => {
-    if (req.session.username) {
+    if (req.session.userId) {
         return res.send({username: req.session.username});
     } else {
         return res.status(401).json({error: "You have to log in first."});
@@ -170,7 +170,7 @@ app.get("/verify", (req, res) => {
 });
 
 app.delete("/logout", (req, res) => {
-    if (!req.session.username) {
+    if (!req.session.userId) {
         return res.sendStatus(422);
     }
     req.session.destroy((err) => {
@@ -182,7 +182,7 @@ app.delete("/logout", (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    if (!req.session.username){
+    if (!req.session.userId){
         res.sendFile(path.join(__dirname, '../Frontend', 'index.html'));
     }else{
         res.sendFile(path.join(__dirname, '../Frontend', 'lobby.html'));
@@ -207,6 +207,26 @@ app.get("*", (req, res) => {
 
 const server = app.listen(process.env.PORT || 3000, () => {
     console.log("[Server] Running on port", process.env.PORT || 3000);
+});
+
+server.on("upgrade", (req, socket, head) => {
+    // Run the session middleware manually on the upgrade request
+    // so we can read req.session
+    sessionMiddleware(req, {}, () => {
+        if (!req.session.userId) {
+            console.log("[WS] Rejected unauthenticated connection attempt");
+            socket.destroy(); // close the TCP connection, no WebSocket
+            return;
+        }
+
+        wss.handleUpgrade(req, socket, head, (ws) => {
+            // Attach user info directly to the ws object
+            // Now we always know who this WebSocket belongs to
+            ws.userId = req.session.userId;
+            ws.username = req.session.username;
+            wss.emit("connection", ws, req);
+        });
+    });
 });
 
 const wss = new WebSocket.Server({ noServer: true });
