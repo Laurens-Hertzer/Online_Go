@@ -11,6 +11,7 @@ const bcrypt = require("bcrypt");
 
 //Definitions
 const app = express();
+app.set("trust proxy", 1);
 
 //DB
 const pool = new Pool({
