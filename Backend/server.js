@@ -157,12 +157,18 @@ app.post("/login", async(req, res) => {
         req.session.userId = user.id;
         req.session.username = user.username;
 
-        res.json({ message: "success", username: user.username });
-    } catch (err) {
-        console.error('Login-Fehler:', err);
-        res.status(500).json({ error: "Serverfehler beim Login" });
+        req.session.save((err) => {
+            if (err) {
+                console.error("[Login] Session save failed:", err);
+                return res.status(500).json({ error: "Session error." });
+            }
+            console.log("[Login] Session saved, userId:", req.session.userId);
+            res.json({ message: "success", username: user.username });
+        });
+        } catch (err) {                          // ← das fehlte
+        console.error("[Login] Error:", err);
+        res.status(500).json({ error: "Internal server error." });
     }
-
 });
 
 app.get("/verify", (req, res) => {

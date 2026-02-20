@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return res.json();
             })
             .then(() => {
-                window.location.href = "/";
+                window.location.href = "lobby.html";
             })
             .catch(err => alert(err.message));
         });
