@@ -56,6 +56,7 @@ socket.onmessage = (msg) => {
     // A move was played (by either player) — draw the stone
     if (data.type === "update") {
         placeStone(data.x, data.y, data.color);
+        currentTurn = currentTurn === "black" ? "white" : "black"; // flip turn
         updateStatus(); // refresh whose turn it is
     }
 
@@ -122,12 +123,3 @@ function updateStatus() {
         statusEl.textContent = "Opponent's turn";
     }
 }
-
-// Keep local turn tracker in sync with server updates
-socket.addEventListener("message", (msg) => {
-    const data = JSON.parse(msg.data);
-    if (data.type === "update") {
-        // After a move the turn flips
-        currentTurn = currentTurn === "black" ? "white" : "black";
-    }
-});
