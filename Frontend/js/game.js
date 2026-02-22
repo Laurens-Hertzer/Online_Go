@@ -73,7 +73,6 @@ socket.onclose = () => {
     gameReady = false;
 };
 
-// ── INPUT ─────────────────────────────────────────────────────
 svg.addEventListener("click", (e) => {
     if (!gameReady) {
         console.log("[Game] Not ready yet");
@@ -94,7 +93,7 @@ svg.addEventListener("click", (e) => {
     socket.send(JSON.stringify({ type: "move", x, y }));
 });
 
-// ── HELPERS ───────────────────────────────────────────────────
+//functions
 function placeStone(x, y, color) {
     const stone = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     stone.setAttribute("cx", x);

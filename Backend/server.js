@@ -11,6 +11,7 @@ const bcrypt = require("bcrypt");
 
 //Definitions
 const app = express();
+//Proxy-Config for Render
 app.set("trust proxy", 1);
 
 //DB
@@ -56,9 +57,6 @@ async function initDatabase() {
 
 initDatabase();
 
-console.log("[ENV] NODE_ENV:", process.env.NODE_ENV);
-console.log("[ENV] ALLOWED_ORIGIN:", process.env.ALLOWED_ORIGIN);
-
 //Authentication, Authorization
 const sessionMiddleware = session({
     store: new pgSession({
@@ -66,9 +64,9 @@ const sessionMiddleware = session({
         tableName: 'session',
         createTableIfMissing: true
     }),
-    secret: process.env.SESSION_SECRET || "supersecret",
-    resave: false,
-    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET,
+    resave: false, // don't save session if unmodified
+    saveUninitialized: false, // don't create session until something stored
         cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Auto true in Render
@@ -77,9 +75,11 @@ const sessionMiddleware = session({
     },
 });
 
-// CORS-Config
+// CORS-Config, allows communication between Frontend 
+// and Backend when they are on different origins (e.g. Render) 
+// and allows cookies to be sent for authentication. 
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
+    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000", //
     credentials: true
 }));
 
@@ -211,7 +211,7 @@ app.get("/game.html", requireAuth, (req, res) => {
 // All static files (CSS, JS, Pictures)
 app.use(express.static(path.join(__dirname, '../Frontend')));
 
-// Catch-All for SPA (anti404 when reloading)
+// Catch-All for SPA (anti404 when reloading) 
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/index.html")); 
 });
@@ -243,7 +243,7 @@ server.on("upgrade", (req, socket, head) => {
 const wss = new WebSocket.Server({ noServer: true });
 
 // Matchmaking
-const games = new Map(); //Map anstelle von Array wegen besseren Idhandling
+const games = new Map(); //Map instead of Array for better id handling.
 let gameIdCounter = 0;
 
 class Game {
@@ -304,7 +304,6 @@ wss.on("connection", (ws) => {
             return;
         }
 
-        // ── CREATE GAME ──────────────────────────────────────
         if (data.action === "create") {
             // One game per user at a time
             if (ws.currentGame) {
@@ -320,7 +319,6 @@ wss.on("connection", (ws) => {
             broadcastGamesList();
         }
 
-        // ── JOIN GAME ────────────────────────────────────────
         if (data.action === "join") {
             const game = games.get(data.gameId); // lookup by ID, not index
 
@@ -348,7 +346,7 @@ wss.on("connection", (ws) => {
             broadcastGamesList();
         }
 
-        // ── MOVE ─────────────────────────────────────────────
+
         if (data.type === "move") {
             if (!ws.currentGame) return;
 
@@ -373,7 +371,6 @@ wss.on("connection", (ws) => {
             if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(moveData);
         }
 
-        // ── REJOIN ───────────────────────────────────────────
         if (data.type === "rejoin") {
             const game = games.get(data.gameId);
 
@@ -410,7 +407,6 @@ wss.on("connection", (ws) => {
         }
     });
 
-    // ── DISCONNECT ───────────────────────────────────────────
     ws.on("close", () => {
         console.log("[WS] User disconnected:", ws.username);
 
@@ -431,7 +427,7 @@ wss.on("connection", (ws) => {
                     games.delete(id);
                     console.log("[Game] Deleted after timeout:", id);
                     broadcastGamesList();
-                }, 30000); // 30 seconds grace period
+                }, 30000); // 30 seconds waiting period
             }
         });
 
@@ -439,14 +435,13 @@ wss.on("connection", (ws) => {
     });
 });
 
-// ============================================================
-// HELPERS
-// ============================================================
+//Functions
+
 function getGamesListPayload() {
     const list = [];
     games.forEach((game, id) => {
         list.push({
-            gameId: id, // send ID not index — frontend uses this for join
+            gameId: id, // send ID not index, frontend uses this for join
             player1: game.player1Id ? game.player1?.username || "Reconnecting..." : null,
             player2: game.player2Id ? game.player2?.username || "Reconnecting..." : null,
         });
