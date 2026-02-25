@@ -293,12 +293,11 @@ class Game {
 
     const captured = [];
     for (const [nx, ny] of neighbors) {
-        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
-        if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board)) {
-            removeGroup(nx, ny, opponent, this.board);
-            captured.push([nx, ny]); // optional: Frontend informieren welche Steine weg sind
-        }
+    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
+    if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board)) {
+        removeGroup(nx, ny, opponent, this.board, captured); 
     }
+}
 
     this.current = this.current === "black" ? "white" : "black";
     return { ok: true, color, captured };
@@ -511,6 +510,7 @@ function removeGroup(x, y, color, board) {
     if (board[y][x] !== color) return;
 
     board[y][x] = null;
+    captured.push([x, y]);
 
     removeGroup(x - 1, y, color, board);
     removeGroup(x + 1, y, color, board);
