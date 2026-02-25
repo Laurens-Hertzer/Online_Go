@@ -55,7 +55,7 @@ socket.onmessage = (msg) => {
 
     // A move was played (by either player) — draw the stone
     if (data.type === "update") {
-        placeStone(data.x, data.y, data.color);
+        placeStone(data.x, data.y, data.color, data.captured);
         currentTurn = currentTurn === "black" ? "white" : "black"; // flip turn
         updateStatus(); // refresh whose turn it is
     }
