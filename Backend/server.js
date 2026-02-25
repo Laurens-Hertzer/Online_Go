@@ -505,15 +505,15 @@ function canTakeStone(x, y, color, board) {
     return !hasLiberty(x, y);
 }
 
-function removeGroup(x, y, color, board) {
+function removeGroup(x, y, color, board, captured = []) {
     if (x < 0 || y < 0 || x >= 19 || y >= 19) return;
     if (board[y][x] !== color) return;
 
     board[y][x] = null;
     captured.push([x, y]);
 
-    removeGroup(x - 1, y, color, board);
-    removeGroup(x + 1, y, color, board);
-    removeGroup(x, y - 1, color, board);
-    removeGroup(x, y + 1, color, board);
+    removeGroup(x - 1, y, color, board, captured);
+    removeGroup(x + 1, y, color, board, captured);
+    removeGroup(x, y - 1, color, board, captured);
+    removeGroup(x, y + 1, color, board, captured);
 }
