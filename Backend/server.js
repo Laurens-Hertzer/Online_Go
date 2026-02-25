@@ -271,24 +271,38 @@ class Game {
     }
 
     playMove(x, y, ws) {
-        if (x < 0 || x > 18 || y < 0 || y > 18) {
-            return { ok: false, reason: "Ungültige Koordinaten"};
-        }
-
-        const color = this.getColor(ws);
-        if (color !== this.current) {
-            return { ok: false, reason: "Not your turn." };
-        }
-
-        if (this.board[y][x] !== null) {
-            return { ok: false, reason: "Feld besetztz"};
-        }
-
-        
-        this.board[y][x] = color;
-        this.current = this.current === "black" ? "white" : "black";
-        return { ok: true, color };
+    if (x < 0 || x > 18 || y < 0 || y > 18) {
+        return { ok: false, reason: "Ungültige Koordinaten" };
     }
+
+    const color = this.getColor(ws);
+    if (color !== this.current) {
+        return { ok: false, reason: "Not your turn." };
+    }
+
+    if (this.board[y][x] !== null) {
+        return { ok: false, reason: "Feld besetzt" };
+    }
+
+    // Stein setzen
+    this.board[y][x] = color;
+
+    // Gegnerische Gruppen ohne Freiheiten entfernen
+    const opponent = color === "black" ? "white" : "black";
+    const neighbors = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
+
+    const captured = [];
+    for (const [nx, ny] of neighbors) {
+        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
+        if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board)) {
+            removeGroup(nx, ny, opponent, this.board);
+            captured.push([nx, ny]); // optional: Frontend informieren welche Steine weg sind
+        }
+    }
+
+    this.current = this.current === "black" ? "white" : "black";
+    return { ok: true, color, captured };
+}
 }
 
 wss.on("connection", (ws) => {
@@ -365,6 +379,7 @@ wss.on("connection", (ws) => {
                 x: data.x,
                 y: data.y,
                 color: result.color,
+                captured: result.captured,
             });
 
             if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(moveData);
@@ -461,4 +476,44 @@ function broadcastGamesList() {
         }
     });
     console.log("[WS] Games list broadcast:", games.size, "games");
+}
+
+function canTakeStone(x, y, color, board) {
+    const visited = new Set();
+
+    function hasLiberty(cx, cy) {
+        const key = `${cx},${cy}`;
+        if (visited.has(key)) return false;
+        visited.add(key);
+
+        const neighbors = [
+            [cx - 1, cy],
+            [cx + 1, cy],
+            [cx, cy - 1],
+            [cx, cy + 1],
+        ];
+
+        for (const [nx, ny] of neighbors) {
+            if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
+            if (board[ny][nx] === null) return true;
+            if (board[ny][nx] === color) {
+                if (hasLiberty(nx, ny)) return true;
+            }
+        }
+        return false;
+    }
+
+    return !hasLiberty(x, y);
+}
+
+function removeGroup(x, y, color, board) {
+    if (x < 0 || y < 0 || x >= 19 || y >= 19) return;
+    if (board[y][x] !== color) return;
+
+    board[y][x] = null;
+
+    removeGroup(x - 1, y, color, board);
+    removeGroup(x + 1, y, color, board);
+    removeGroup(x, y - 1, color, board);
+    removeGroup(x, y + 1, color, board);
 }

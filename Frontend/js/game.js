@@ -95,14 +95,28 @@ svg.addEventListener("click", (e) => {
 });
 
 //functions
-function placeStone(x, y, color) {
+function placeStone(x, y, color, captured) {
+
+    if (captured && captured.length > 0) {
+        captured.forEach(({ x, y }) => {
+            const id = `stone-${x}-${y}`;
+            const stoneEl = document.getElementById(id);
+            if (stoneEl) {
+                svg.removeChild(stoneEl);
+            }
+        });
+    }
     const stone = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    stone.setAttribute("id", id);
     stone.setAttribute("cx", x);
     stone.setAttribute("cy", y);
     stone.setAttribute("r", 0.45);
     stone.setAttribute("fill", color);
     svg.appendChild(stone);
 }
+
+
+
 
 // Tracks whose turn it is locally so we can show it in the UI.
 // The server is the real authority — this is display only.
@@ -122,4 +136,16 @@ function updateStatus() {
     } else {
         statusEl.textContent = "Opponent's turn";
     }
+}
+
+function removeGroup(x, y, color, board) {
+    if (x < 0 || y < 0 || x >= 19 || y >= 19) return;
+    if (board[y][x] !== color) return;
+
+    board[y][x] = null;
+
+    removeGroup(x - 1, y, color, board);
+    removeGroup(x + 1, y, color, board);
+    removeGroup(x, y - 1, color, board);
+    removeGroup(x, y + 1, color, board);
 }
