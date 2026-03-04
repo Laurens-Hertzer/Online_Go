@@ -92,10 +92,3 @@ function showTimerModal(onConfirm) {
         onConfirm(minutes * 60);
     };
 }
-
-// Beim Create-Button statt direktem send:
-createGameBtn.addEventListener("click", () => {
-    showTimerModal((seconds) => {
-        socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds }));
-    });
-});
