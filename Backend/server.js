@@ -260,6 +260,8 @@ class Game {
         this.player2Disconnected = false;
         this.deleteTimeout = null;
 
+        this.blackTime = 15 * 60; 
+        this.whiteTime = 15 * 60; 
         this.board = Array.from({ length: 19},  () => Array(19).fill(null));
         this.current = "black"; //in go black starts btw
     }

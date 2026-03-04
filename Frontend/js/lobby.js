@@ -1,6 +1,7 @@
 let socket;
 let gameList;
 let createGameBtn;
+let time;
 
 window.addEventListener('DOMContentLoaded', () => {
     gameList = document.getElementById("game-list");
@@ -8,6 +9,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     createGameBtn.addEventListener("click", () => {
         if (socket?.readyState === WebSocket.OPEN) {
+            if (!time.value || isNaN(time.value) || time.value <= 0) {
+                prompt("Please enter a valid time in seconds for each player");
+                return;
+            }
             socket.send(JSON.stringify({ action: "create" }));
         }
     });
@@ -73,11 +78,28 @@ function renderGameList(games) {
         .join("");
 }
 
-// ── ACTIONS ───────────────────────────────────────────────────
-
 function joinGame(gameId) {
     if (socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ action: "join", gameId }));
         console.log("[Game] Joining game:", gameId);
     }
 }
+
+// In lobby.js
+function showTimerModal(onConfirm) {
+    const modal = document.getElementById("timer-modal");
+    modal.style.display = "flex";
+
+    document.getElementById("timer-confirm").onclick = () => {
+        const minutes = parseInt(document.getElementById("timer-input").value) || 10;
+        modal.style.display = "none";
+        onConfirm(minutes * 60);
+    };
+}
+
+// Beim Create-Button statt direktem send:
+createGameBtn.addEventListener("click", () => {
+    showTimerModal((seconds) => {
+        socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds }));
+    });
+});
