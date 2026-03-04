@@ -97,14 +97,14 @@ svg.addEventListener("click", (e) => {
 //functions
 function placeStone(x, y, color, captured) {
     if (captured && captured.length > 0) {
-        captured.forEach(([cx, cy]) => {          // ← Array destructuring, nicht Objekt
+        captured.forEach(([cx, cy]) => {          // ← Array destructuring, not Objekt
             const id = `stone-${cx}-${cy}`;
             const stoneEl = document.getElementById(id);
             if (stoneEl) stoneEl.remove();
         });
     }
 
-    const id = `stone-${x}-${y}`;                // ← id hier definieren
+    const id = `stone-${x}-${y}`;                
     const stone = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     stone.setAttribute("id", id);
     stone.setAttribute("cx", x);

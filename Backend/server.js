@@ -90,7 +90,7 @@ app.use(sessionMiddleware);
 
 function requireAuth(req, res, next) {
     if (!req.session.userId) {
-        return res.status(401).json({ error: "Nicht eingeloggt" });
+        return res.status(401).json({ error: "Not logt in" });
     }
     next();
 }
@@ -103,16 +103,16 @@ app.post("/register", async(req, res) => {
     }
     
     if (username.length < 3) {
-        return res.status(422).json({ error: "Username has to be bigger then 3 letters." });
+        return res.status(422).json({ error: "Username has to be atleast 3 letters." });
     }
     if (password.length < 8) {
-        return res.status(422).json({ error: "Passwort too short, not so difficult to remember a bigger one, I trust u ;)." });
+        return res.status(422).json({ error: "Passwort too short, has to be atleast 8 characters big." });
     }
 
     try {
         const existingUser = await pool.query('SELECT id FROM users WHERE username = $1',[username]);
             if (existingUser.rows.length > 0) {
-            return res.status(409).json({ error: "Username bereits vergeben" });
+            return res.status(409).json({ error: "Username already taken" });
         }
 
        
@@ -124,10 +124,10 @@ app.post("/register", async(req, res) => {
             [username, passwordHash]
         );
 
-        res.json({ message: "Account erfolgreich erstellt" });
+        res.json({ message: "Account sucessfully created" });
     } catch (err) {
-        console.error('Registrierungsfehler:', err);
-        res.status(500).json({ error: "Serverfehler bei Registrierung" });
+        console.error('registrationerror:', err);
+        res.status(500).json({ error: "Servererror during registration" });
     }
 });
 
@@ -135,7 +135,7 @@ app.post("/login", async(req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(422).json({ error: "I need your credentials twin." })
+        return res.status(422).json({ error: "Not all needed credentials given." })
     }
 
     try {
@@ -166,7 +166,7 @@ app.post("/login", async(req, res) => {
             console.log("[Login] Session saved, userId:", req.session.userId);
             res.json({ message: "success", username: user.username });
         });
-        } catch (err) {                          // ← das fehlte
+        } catch (err) {                         
         console.error("[Login] Error:", err);
         res.status(500).json({ error: "Internal server error." });
     }
@@ -186,7 +186,7 @@ app.delete("/logout", (req, res) => {
     }
     req.session.destroy((err) => {
         if (err) {
-            return res.status(500).json({ error: "Logout failed (how'd'ya manage that lol)" });
+            return res.status(500).json({ error: "Logout failed."});
         }
         res.json({ message: "Succesful logout" });
     });
