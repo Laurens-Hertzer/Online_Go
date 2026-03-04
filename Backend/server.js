@@ -398,9 +398,10 @@ wss.on("connection", (ws) => {
             game.player2Id = ws.userId;
             ws.currentGame = game;
 
+            game.startTimer();
+            const timers = game.getTimers();
             game.player1.send(JSON.stringify({ type: "start", color: "black", gameId: game.id, timers }));
             game.player2.send(JSON.stringify({ type: "start", color: "white", gameId: game.id, timers }));
-            game.startTimer();
 
             console.log("[Game] Started:", game.id);
             broadcastGamesList();
