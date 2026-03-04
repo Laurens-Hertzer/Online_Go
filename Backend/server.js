@@ -260,11 +260,54 @@ class Game {
         this.player2Disconnected = false;
         this.deleteTimeout = null;
 
-        this.blackTime = 15 * 60; 
-        this.whiteTime = 15 * 60; 
+        const ms = (timePerPlayer || 600) * 1000;
+        this.blackTime = ms; 
+        this.whiteTime = ms; 
+        this.turnStartAt = null;
+        this.timerInterval = null;
         this.board = Array.from({ length: 19},  () => Array(19).fill(null));
         this.current = "black"; //in go black starts btw
     }
+        startTimer() {
+    this.turnStartedAt = Date.now();
+    this.timerInterval = setInterval(() => {
+        const elapsed = Date.now() - this.turnStartedAt;
+        const remaining = this.current === "black"
+            ? this.blackTime - elapsed
+            : this.whiteTime - elapsed;
+        if (remaining <= 0) {
+            this.stopTimer();
+            const loser = this.current;
+            const winner = loser === "black" ? "white" : "black";
+            const msg = JSON.stringify({ type: "timeout", loser, winner });
+            if (this.player1?.readyState === WebSocket.OPEN) this.player1.send(msg);
+            if (this.player2?.readyState === WebSocket.OPEN) this.player2.send(msg);
+        }
+    }, 1000);
+}
+
+stopTimer() {
+    if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
+}
+
+consumeTime() {
+    if (!this.turnStartedAt) return;
+    const elapsed = Date.now() - this.turnStartedAt;
+    if (this.current === "black") {
+        this.blackTime = Math.max(0, this.blackTime - elapsed);
+    } else {
+        this.whiteTime = Math.max(0, this.whiteTime - elapsed);
+    }
+    this.turnStartedAt = Date.now();
+}
+
+getTimers() {
+    const elapsed = this.turnStartedAt ? Date.now() - this.turnStartedAt : 0;
+    return {
+        black: this.current === "black" ? Math.max(0, this.blackTime - elapsed) : this.blackTime,
+        white: this.current === "white" ? Math.max(0, this.whiteTime - elapsed) : this.whiteTime,
+    };
+}
 
     getColor(ws) {
         if (ws.userId === this.player1Id) return "black";
@@ -300,11 +343,12 @@ class Game {
         removeGroup(nx, ny, opponent, this.board, captured); 
     }
 }
-
+    this.consumeTime(color);
     this.current = this.current === "black" ? "white" : "black";
     return { ok: true, color, captured };
 }
 }
+
 
 wss.on("connection", (ws) => {
     console.log("[WS] User connected:", ws.username);
@@ -326,11 +370,11 @@ wss.on("connection", (ws) => {
                 return;
             }
 
-            const game = new Game(ws);
+            const game = new Game(ws, data.timePerPlayer);
             games.set(game.id, game);
             ws.currentGame = game;
 
-            console.log("[Game] Created:", game.id, "by", ws.username);
+            console.log("[Game] Created:", game.id, "by", ws.username, "with time:", data.timePerPlayer, "minutes per player");
             broadcastGamesList();
         }
 
@@ -354,8 +398,9 @@ wss.on("connection", (ws) => {
             game.player2Id = ws.userId;
             ws.currentGame = game;
 
-            game.player1.send(JSON.stringify({ type: "start", color: "black", gameId: game.id }));
-            game.player2.send(JSON.stringify({ type: "start", color: "white", gameId: game.id }));
+            game.player1.send(JSON.stringify({ type: "start", color: "black", gameId: game.id, timers }));
+            game.player2.send(JSON.stringify({ type: "start", color: "white", gameId: game.id, timers }));
+            game.startTimer();
 
             console.log("[Game] Started:", game.id);
             broadcastGamesList();
@@ -381,6 +426,7 @@ wss.on("connection", (ws) => {
                 y: data.y,
                 color: result.color,
                 captured: result.captured,
+                timers: game.getTimers(),
             });
 
             if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(moveData);
@@ -439,6 +485,7 @@ wss.on("connection", (ws) => {
             // Only delete the game if BOTH players are gone,
             // and give them 30 seconds to rejoin first
             if (game.player1Disconnected && game.player2Disconnected) {
+                game.stopTimer();
                 game.deleteTimeout = setTimeout(() => {
                     games.delete(id);
                     console.log("[Game] Deleted after timeout:", id);

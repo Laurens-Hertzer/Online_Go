@@ -8,14 +8,10 @@ window.addEventListener('DOMContentLoaded', () => {
     createGameBtn = document.getElementById("create-game-btn");
 
     createGameBtn.addEventListener("click", () => {
-        if (socket?.readyState === WebSocket.OPEN) {
-            if (!time.value || isNaN(time.value) || time.value <= 0) {
-                prompt("Please enter a valid time in seconds for each player");
-                return;
-            }
-            socket.send(JSON.stringify({ action: "create" }));
-        }
+    showTimerModal((seconds) => {
+        socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds }));
     });
+});
     connectWebSocket();
 });
 
