@@ -496,7 +496,7 @@ wss.on("connection", (ws) => {
             const oneDisconnected = game.player1Disconnected || game.player2Disconnected;
 
             // Delete the game as soon as one of them is away for 30 seconds
-            if (oneDisconnected || !game.deleteTimeout) {
+            if (oneDisconnected && !game.deleteTimeout) {
                 const remaining = game.player1Disconnected ? game.player2 : game.player1;
                 if (remaining?.readyState === WebSocket.OPEN) {
                     remaining.send(JSON.stringify({ 
