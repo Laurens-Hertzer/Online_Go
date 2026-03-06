@@ -454,6 +454,11 @@ wss.on("connection", (ws) => {
             if (game.deleteTimeout) {
                 clearTimeout(game.deleteTimeout);
                 game.deleteTimeout = null;
+            
+                const other = color === "black" ? game.player2 : game.player1;
+                if (other?.readyState === WebSocket.OPEN) {
+                other.send(JSON.stringify({ type: "opponent_returned" }));
+                }
             }
 
             if (color === "black") {
@@ -487,11 +492,26 @@ wss.on("connection", (ws) => {
                 game.player2 = null;
             }
 
-            // Only delete the game if BOTH players are gone,
-            // and give them 30 seconds to rejoin first
-            if (game.player1Disconnected && game.player2Disconnected) {
-                game.stopTimer();
+            const oneDisconnected = game.player1Disconnected || game.player2Disconnected;
+
+            // Delete the game as soon as one of them is away for 30 seconds
+            if (oneDisconnected || !game.deleteTimeout) {
+                const remaining = game.player1Disconnected ? game.player2 : game.player1;
+                if (remaining?.readyState === WebSocket.OPEN) {
+                    remaining.send(JSON.stringify({ 
+                        type: "opponent_left",
+                        message: "Your opponent disconnected. They have 30 seconds to reconnect."
+                    }));
+                }
+
                 game.deleteTimeout = setTimeout(() => {
+                    const winner = game.player1Disconnected ? game.player2 : game.player1;
+                    if (winner?.readyState === WebSocket.OPEN) {
+                    winner.send(JSON.stringify({ 
+                        type: "win_by_disconnect",
+                        message: "Your opponent didn't reconnect. You win!"
+                    })); 
+                }
                     games.delete(id);
                     console.log("[Game] Deleted after timeout:", id);
                     broadcastGamesList();

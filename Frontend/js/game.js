@@ -70,10 +70,26 @@ socket.onmessage = (msg) => {
     clearInterval(countdownInterval);
     alert(`Time's up! ${data.winner} wins!`);
     window.location.href = "lobby.html";
-}
+    }
     if (data.type === "error") {
         console.error("[Server error]", data.message);
     }
+    if (data.type === "opponent_left") {
+    console.log("[Game] Opponent disconnected");
+    // Nur informieren, nicht sofort weiterleiten
+    document.getElementById("status").textContent = "Opponent disconnected. Waiting 30s...";
+}
+
+if (data.type === "opponent_returned") {
+    document.getElementById("status").textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
+}
+
+if (data.type === "win_by_disconnect") {
+    gameReady = false;
+    clearInterval(countdownInterval);
+    alert("You win! Your opponent didn't reconnect.");
+    window.location.href = "lobby.html";
+}
 };
 
 socket.onerror = () => {
@@ -138,18 +154,22 @@ function startLocalCountdown() {
 function updateStatus() {
     const statusEl = document.getElementById("status");
     const timeEl = document.getElementById("time");
+    const timeOpponentEl = document.getElementById("time-opponent");
     if (!statusEl) return;
 
-    if (!gameReady) {
-        statusEl.textContent = "Connecting...";
-        return;
-    }
+    if (!gameReady) { statusEl.textContent = "Connecting..."; return; }
 
     statusEl.textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
 
+    const opponentColor = myColor === "black" ? "white" : "black";
+
     if (timeEl) {
         const myTime = myColor === "black" ? localTimers.black : localTimers.white;
-        timeEl.textContent = formatTime(myTime);
+        timeEl.textContent = `You: ${formatTime(myTime)}`;
+    }
+    if (timeOpponentEl) {
+        const oppTime = opponentColor === "black" ? localTimers.black : localTimers.white;
+        timeOpponentEl.textContent = `Opponent: ${formatTime(oppTime)}`;
     }
 }
 
