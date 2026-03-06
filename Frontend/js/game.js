@@ -1,9 +1,11 @@
 const svg = document.getElementById("goboard");
-
 const gameId =sessionStorage.getItem("gameId");
 const myColor = sessionStorage.getItem("myColor");
+const timers = sessionStorage.getItem("timers");
 
 let gameReady = false;
+let localTimers = { black: 0, white: 0 };
+let countdownInterval = null;
 
 // Linien erzeugen
 for (let i = 0; i < 19; i++) {
@@ -49,17 +51,25 @@ socket.onmessage = (msg) => {
     // Server confirmed we are in the game — allow moves now
     if (data.type === "rejoin_success") {
         gameReady = true;
+        if (data.timers) localTimers = data.timers;
         console.log("[Game] Ready");
+        startLocalCountdown();
         updateStatus();
     }
 
     // A move was played (by either player) — draw the stone
     if (data.type === "update") {
         placeStone(data.x, data.y, data.color, data.captured);
+        if (data.timers) localTimers = data.timers; // update timers if provided
         currentTurn = currentTurn === "black" ? "white" : "black"; // flip turn
         updateStatus(); // refresh whose turn it is
     }
-
+    if (data.type === "timeout") {
+    gameReady = false;
+    clearInterval(countdownInterval);
+    alert(`Time's up! ${data.winner} wins!`);
+    window.location.href = "lobby.html";
+}
     if (data.type === "error") {
         console.error("[Server error]", data.message);
     }
@@ -112,6 +122,41 @@ function placeStone(x, y, color, captured) {
     stone.setAttribute("r", 0.45);
     stone.setAttribute("fill", color);
     svg.appendChild(stone);
+}
+function startLocalCountdown() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+        if (currentTurn === "black") {
+            localTimers.black = Math.max(0, localTimers.black - 1000);
+        } else {
+            localTimers.white = Math.max(0, localTimers.white - 1000);
+        }
+        updateStatus();
+    }, 1000);
+}
+function updateStatus() {
+    const statusEl = document.getElementById("status");
+    const timeEl = document.getElementById("time");
+    if (!statusEl) return;
+
+    if (!gameReady) {
+        statusEl.textContent = "Connecting...";
+        return;
+    }
+
+    statusEl.textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
+
+    if (timeEl) {
+        const myTime = myColor === "black" ? localTimers.black : localTimers.white;
+        timeEl.textContent = formatTime(myTime);
+    }
+}
+
+function formatTime(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const minutes = Math.floor(total / 60);
+    const seconds = total % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 
