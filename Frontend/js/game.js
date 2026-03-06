@@ -159,29 +159,6 @@ function formatTime(ms) {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-
-
-
-// Tracks whose turn it is locally so we can show it in the UI.
-// The server is the real authority — this is display only.
-let currentTurn = "black"; // black always starts in Go
-
-function updateStatus() {
-    const statusEl = document.getElementById("status");
-    if (!statusEl) return; // only runs if you have a status element in your HTML
-
-    if (!gameReady) {
-        statusEl.textContent = "Connecting...";
-        return;
-    }
-
-    if (currentTurn === myColor) {
-        statusEl.textContent = "Your turn";
-    } else {
-        statusEl.textContent = "Opponent's turn";
-    }
-}
-
 function removeGroup(x, y, color, board) {
     if (x < 0 || y < 0 || x >= 19 || y >= 19) return;
     if (board[y][x] !== color) return;
