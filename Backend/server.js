@@ -263,7 +263,7 @@ class Game {
         const ms = (timePerPlayer || 600) * 1000;
         this.blackTime = ms; 
         this.whiteTime = ms; 
-        this.turnStartAt = null;
+        this.turnStartedAt = null;
         this.timerInterval = null;
         this.board = Array.from({ length: 19},  () => Array(19).fill(null));
         this.current = "black"; //in go black starts btw
@@ -466,7 +466,7 @@ wss.on("connection", (ws) => {
 
             ws.currentGame = game;
             console.log("[Game] Rejoined:", game.id, "as", color, "by", ws.username);
-            ws.send(JSON.stringify({ type: "rejoin_success", color }));
+            ws.send(JSON.stringify({ type: "rejoin_success", color, timers: game.getTimers() }));
         }
     });
 
