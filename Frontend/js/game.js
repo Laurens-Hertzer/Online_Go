@@ -3,6 +3,7 @@ const gameId =sessionStorage.getItem("gameId");
 const myColor = sessionStorage.getItem("myColor");
 const timers = sessionStorage.getItem("timers");
 
+let currentTurn = "black";
 let gameReady = false;
 let localTimers = { black: 0, white: 0 };
 let countdownInterval = null;
