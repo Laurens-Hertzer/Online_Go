@@ -464,6 +464,10 @@ wss.on("connection", (ws) => {
                 game.player2Disconnected = false;
             }
 
+            if (!game.player1Disconnected && !game.player2Disconnected && !game.timerInterval) {
+                game.startTimer();
+            }
+
             ws.currentGame = game;
             console.log("[Game] Rejoined:", game.id, "as", color, "by", ws.username);
             ws.send(JSON.stringify({ type: "rejoin_success", color, timers: game.getTimers() }));
