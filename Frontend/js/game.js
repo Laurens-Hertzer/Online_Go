@@ -7,6 +7,7 @@ let currentTurn = "black";
 let gameReady = false;
 let localTimers = { black: 0, white: 0 };
 let countdownInterval = null;
+let localTerritory = { blackTerritory: 0, whiteTerritory: 0 };
 
 // Linien erzeugen
 for (let i = 0; i < 19; i++) {
@@ -58,13 +59,14 @@ socket.onmessage = (msg) => {
         updateStatus();
     }
 
-    // A move was played (by either player) — draw the stone
     if (data.type === "update") {
         placeStone(data.x, data.y, data.color, data.captured);
-        if (data.timers) localTimers = data.timers; // update timers if provided
-        currentTurn = currentTurn === "black" ? "white" : "black"; // flip turn
-        updateStatus(); // refresh whose turn it is
+        if (data.timers) localTimers = data.timers;
+        if (data.territory) localTerritory = data.territory; // ← neu
+        currentTurn = currentTurn === "black" ? "white" : "black";
+        updateStatus();
     }
+
     if (data.type === "timeout") {
     gameReady = false;
     clearInterval(countdownInterval);
@@ -155,6 +157,9 @@ function updateStatus() {
     const statusEl = document.getElementById("status");
     const timeEl = document.getElementById("time");
     const timeOpponentEl = document.getElementById("time-opponent");
+    const territoryEl = document.getElementById("territory");
+    const territoryOpponentEl = document.getElementById("territory-opponent");
+
     if (!statusEl) return;
 
     if (!gameReady) { statusEl.textContent = "Connecting..."; return; }
@@ -170,6 +175,14 @@ function updateStatus() {
     if (timeOpponentEl) {
         const oppTime = opponentColor === "black" ? localTimers.black : localTimers.white;
         timeOpponentEl.textContent = `Opponent: ${formatTime(oppTime)}`;
+    }
+    if (territoryEl) {
+        const myTerritory = myColor === "black" ? localTerritory.blackTerritory : localTerritory.whiteTerritory;
+        territoryEl.textContent = `Your territory: ${myTerritory}`;
+    }
+    if (territoryOpponentEl) {
+        const oppTerritory = myColor === "black" ? localTerritory.whiteTerritory : localTerritory.blackTerritory;
+        territoryOpponentEl.textContent = `Opponent's territory: ${oppTerritory}`;
     }
 }
 

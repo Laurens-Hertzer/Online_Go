@@ -428,6 +428,7 @@ wss.on("connection", (ws) => {
                 color: result.color,
                 captured: result.captured,
                 timers: game.getTimers(),
+                territory: calculateTerritory(game.board) 
             });
 
             if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(moveData);
@@ -590,4 +591,52 @@ function removeGroup(x, y, color, board, captured = []) {
     removeGroup(x + 1, y, color, board, captured);
     removeGroup(x, y - 1, color, board, captured);
     removeGroup(x, y + 1, color, board, captured);
+}
+
+function calculateTerritory(board) {
+    const visited = new Set();
+    let blackTerritory = 0;
+    let whiteTerritory = 0;
+
+    for (let y = 0; y < 19; y++) {
+        for (let x = 0; x < 19; x++) {
+            if (board[y][x] !== null) continue;
+            const key = `${x},${y}`;
+            if (visited.has(key)) continue;
+
+            // Flood fill von diesem leeren Feld aus
+            const region = [];
+            const borders = new Set(); // welche Farben grenzen an
+            const queue = [[x, y]];
+
+            while (queue.length > 0) {
+                const [cx, cy] = queue.pop();
+                const k = `${cx},${cy}`;
+                if (visited.has(k)) continue;
+                visited.add(k);
+
+                if (board[cy][cx] !== null) {
+                    borders.add(board[cy][cx]);
+                    continue;
+                }
+
+                region.push([cx, cy]);
+
+                for (const [nx, ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]) {
+                    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
+                    queue.push([nx, ny]);
+                }
+            }
+
+            // Gebiet zuordnen
+            if (borders.size === 1) {
+                const owner = [...borders][0];
+                if (owner === "black") blackTerritory += region.length;
+                if (owner === "white") whiteTerritory += region.length;
+            }
+            // borders.size === 2 → neutral, niemand bekommt Punkte
+        }
+    }
+
+    return { blackTerritory, whiteTerritory };
 }
