@@ -343,6 +343,10 @@ getTimers() {
         removeGroup(nx, ny, opponent, this.board, captured); 
     }
 }
+    if (canTakeStone(x, y, color, this.board)) {
+    this.board[y][x] = null; // Zug rückgängig machen
+    return { ok: false, reason: "Suicide move not allowed." };
+}
     this.consumeTime(color);
     this.current = this.current === "black" ? "white" : "black";
     return { ok: true, color, captured };
