@@ -613,18 +613,18 @@ function calculateTerritory(board) {
                 const [cx, cy] = queue.pop();
                 const k = `${cx},${cy}`;
                 if (visited.has(k)) continue;
-                visited.add(k);
+                visited.add(k); // ← bereits hier, vor allem anderen
 
                 if (board[cy][cx] !== null) {
                     borders.add(board[cy][cx]);
-                    continue;
+                    continue; // Stein → nicht zur Region, aber als besucht markiert
                 }
 
                 region.push([cx, cy]);
 
                 for (const [nx, ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]) {
                     if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
-                    queue.push([nx, ny]);
+                    if (!visited.has(`${nx},${ny}`)) queue.push([nx, ny]);
                 }
             }
 
