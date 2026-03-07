@@ -610,23 +610,26 @@ function calculateTerritory(board) {
             const queue = [[x, y]];
 
             while (queue.length > 0) {
-                const [cx, cy] = queue.pop();
-                const k = `${cx},${cy}`;
-                if (visited.has(k)) continue;
-                visited.add(k); // ← bereits hier, vor allem anderen
+    const [cx, cy] = queue.pop();
+    const k = `${cx},${cy}`;
+    if (visited.has(k)) continue;
 
-                if (board[cy][cx] !== null) {
-                    borders.add(board[cy][cx]);
-                    continue; // Stein → nicht zur Region, aber als besucht markiert
-                }
+    if (board[cy][cx] !== null) {
+        // Stein — als Grenze merken aber NICHT zu visited hinzufügen
+        // damit er für andere Regionen wieder als Grenze erkannt wird
+        borders.add(board[cy][cx]);
+        continue;
+    }
 
-                region.push([cx, cy]);
+    visited.add(k); // ← nur leere Felder zu visited hinzufügen
 
-                for (const [nx, ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]) {
-                    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
-                    if (!visited.has(`${nx},${ny}`)) queue.push([nx, ny]);
-                }
-            }
+    region.push([cx, cy]);
+
+    for (const [nx, ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]) {
+        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
+        if (!visited.has(`${nx},${ny}`)) queue.push([nx, ny]);
+    }
+}
 
             // Gebiet zuordnen
             if (borders.size === 1) {
