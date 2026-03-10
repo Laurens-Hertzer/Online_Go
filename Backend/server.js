@@ -247,7 +247,7 @@ const games = new Map(); //Map instead of Array for better id handling.
 let gameIdCounter = 0;
 
 class Game {
-    constructor(creatorWs, timePerPlayer) {
+    constructor(creatorWs, timePerPlayer, boardSize) {
         this.id = `game_${gameIdCounter++}`;
 
         this.player1 = creatorWs;
