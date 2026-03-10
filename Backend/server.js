@@ -265,7 +265,8 @@ class Game {
         this.whiteTime = ms; 
         this.turnStartedAt = null;
         this.timerInterval = null;
-        this.board = Array.from({ length: 19},  () => Array(19).fill(null));
+        this.boardSize = boardSize || 19;
+        this.board = Array.from({ length: this.boardSize }, () => Array(this.boardSize).fill(null));
         this.current = "black"; //in go black starts btw
     }
         startTimer() {
@@ -316,7 +317,7 @@ getTimers() {
     }
 
     playMove(x, y, ws) {
-    if (x < 0 || x > 18 || y < 0 || y > 18) {
+    if (x < 0 || x >= this.boardSize || y < 0 || y >= this.boardSize) {
         return { ok: false, reason: "Ungültige Koordinaten" };
     }
 
@@ -374,7 +375,7 @@ wss.on("connection", (ws) => {
                 return;
             }
 
-            const game = new Game(ws, data.timePerPlayer);
+            const game = new Game(ws, data.timePerPlayer, data.boardSize);
             games.set(game.id, game);
             ws.currentGame = game;
 
@@ -404,8 +405,8 @@ wss.on("connection", (ws) => {
 
             game.startTimer();
             const timers = game.getTimers();
-            game.player1.send(JSON.stringify({ type: "start", color: "black", gameId: game.id, timers }));
-            game.player2.send(JSON.stringify({ type: "start", color: "white", gameId: game.id, timers }));
+            game.player1.send(JSON.stringify({ type: "start", color: "black", gameId: game.id, timers, boardSize: game.boardSize }));
+            game.player2.send(JSON.stringify({ type: "start", color: "white", gameId: game.id, timers, boardSize: game.boardSize }));
 
             console.log("[Game] Started:", game.id);
             broadcastGamesList();
@@ -556,7 +557,7 @@ function broadcastGamesList() {
     console.log("[WS] Games list broadcast:", games.size, "games");
 }
 
-function canTakeStone(x, y, color, board) {
+function canTakeStone(x, y, color, board, boardSize = 19) {
     const visited = new Set();
 
     function hasLiberty(cx, cy) {
@@ -572,7 +573,7 @@ function canTakeStone(x, y, color, board) {
         ];
 
         for (const [nx, ny] of neighbors) {
-            if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
+            if (nx < 0 || ny < 0 || nx >= boardSize || ny >= boardSize) continue;
             if (board[ny][nx] === null) return true;
             if (board[ny][nx] === color) {
                 if (hasLiberty(nx, ny)) return true;
@@ -584,7 +585,7 @@ function canTakeStone(x, y, color, board) {
     return !hasLiberty(x, y);
 }
 
-function removeGroup(x, y, color, board, captured = []) {
+function removeGroup(x, y, color, board, captured = [], boardSize = 19) {
     if (x < 0 || y < 0 || x >= 19 || y >= 19) return;
     if (board[y][x] !== color) return;
 
@@ -597,7 +598,7 @@ function removeGroup(x, y, color, board, captured = []) {
     removeGroup(x, y + 1, color, board, captured);
 }
 
-function calculateTerritory(board) {
+function calculateTerritory(board, boardSize = 19) {
     const visited = new Set();
     let blackTerritory = 0;
     let whiteTerritory = 0;

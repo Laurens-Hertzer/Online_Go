@@ -9,7 +9,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     createGameBtn.addEventListener("click", () => {
     showTimerModal((seconds) => {
-        socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds }));
+        socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds, boardSize }));
     });
 });
     connectWebSocket();
@@ -29,12 +29,12 @@ socket.onmessage = (event) => {
             renderGameList(data.games);
         }
         
-        if (data.type === 'start') {
-            console.log('You start as', data.color);
-            sessionStorage.setItem("gameId", data.gameId); 
-            sessionStorage.setItem("myColor", data.color);
-            window.location.href = 'game.html';
-        }
+        if (data.type === "start") {
+    sessionStorage.setItem("gameId", data.gameId);
+    sessionStorage.setItem("myColor", data.color);
+    sessionStorage.setItem("boardSize", data.boardSize); // ← neu
+    window.location.href = "game.html";
+}
         
         if (data.type === 'error') {
             console.error('Error from server:', data.message);
@@ -88,7 +88,8 @@ function showTimerModal(onConfirm) {
 
     document.getElementById("timer-confirm").onclick = () => {
         const minutes = parseInt(document.getElementById("timer-input").value) || 10;
+        const boardSize = parseInt(document.getElementById("board-size-input").value) || 19;
         modal.style.display = "none";
-        onConfirm(minutes * 60);
+        onConfirm(minutes * 60, boardSize);
     };
 }

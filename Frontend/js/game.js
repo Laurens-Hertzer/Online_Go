@@ -2,6 +2,20 @@ const svg = document.getElementById("goboard");
 const gameId =sessionStorage.getItem("gameId");
 const myColor = sessionStorage.getItem("myColor");
 const timers = sessionStorage.getItem("timers");
+const boardSize = parseInt(sessionStorage.getItem("boardSize")) || 19;
+
+// SVG viewBox anpassen:
+svg.setAttribute("viewBox", `-1 -1 ${boardSize + 1} ${boardSize + 1}`);
+
+// Linien dynamisch:
+for (let i = 0; i < boardSize; i++) {
+    // x1/y1/x2/y2 mit boardSize - 1 als Maximum
+    h.setAttribute("x2", boardSize - 1);
+    v.setAttribute("y2", boardSize - 1);
+}
+
+// Klick-Koordinaten Grenzcheck:
+if (x < 0 || x >= boardSize || y < 0 || y >= boardSize) return;
 
 let currentTurn = "black";
 let gameReady = false;
