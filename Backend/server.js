@@ -339,12 +339,12 @@ getTimers() {
 
     const captured = [];
     for (const [nx, ny] of neighbors) {
-    if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
-    if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board)) {
-        removeGroup(nx, ny, opponent, this.board, captured); 
+    if (nx < 0 || ny < 0 || nx >= this.boardSize || ny >= this.boardSize) continue;
+    if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board, this.boardSize)) {
+        removeGroup(nx, ny, opponent, this.board, captured, this.boardSize);
     }
 }
-    if (canTakeStone(x, y, color, this.board)) {
+    if (canTakeStone(x, y, color, this.board, this.boardSize)) {
     this.board[y][x] = null; // Zug rückgängig machen
     return { ok: false, reason: "Suicide move not allowed." };
 }
@@ -433,7 +433,7 @@ wss.on("connection", (ws) => {
                 color: result.color,
                 captured: result.captured,
                 timers: game.getTimers(),
-                territory: calculateTerritory(game.board) 
+                territory: calculateTerritory(game.board, game.boardSize) 
             });
 
             if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(moveData);
@@ -586,16 +586,14 @@ function canTakeStone(x, y, color, board, boardSize = 19) {
 }
 
 function removeGroup(x, y, color, board, captured = [], boardSize = 19) {
-    if (x < 0 || y < 0 || x >= 19 || y >= 19) return;
+    if (x < 0 || y < 0 || x >= boardSize || y >= boardSize) return;
     if (board[y][x] !== color) return;
-
     board[y][x] = null;
     captured.push([x, y]);
-
-    removeGroup(x - 1, y, color, board, captured);
-    removeGroup(x + 1, y, color, board, captured);
-    removeGroup(x, y - 1, color, board, captured);
-    removeGroup(x, y + 1, color, board, captured);
+    removeGroup(x - 1, y, color, board, captured, boardSize); 
+    removeGroup(x + 1, y, color, board, captured, boardSize);
+    removeGroup(x, y - 1, color, board, captured, boardSize);
+    removeGroup(x, y + 1, color, board, captured, boardSize);
 }
 
 function calculateTerritory(board, boardSize = 19) {
@@ -603,8 +601,8 @@ function calculateTerritory(board, boardSize = 19) {
     let blackTerritory = 0;
     let whiteTerritory = 0;
 
-    for (let y = 0; y < 19; y++) {
-        for (let x = 0; x < 19; x++) {
+for (let y = 0; y < boardSize; y++) {
+    for (let x = 0; x < boardSize; x++) {
             if (board[y][x] !== null) continue;
             const key = `${x},${y}`;
             if (visited.has(key)) continue;
@@ -630,8 +628,9 @@ function calculateTerritory(board, boardSize = 19) {
 
     region.push([cx, cy]);
 
-    for (const [nx, ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]) {
-        if (nx < 0 || ny < 0 || nx >= 19 || ny >= 19) continue;
+    // NEU
+for (const [nx, ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]) {
+    if (nx < 0 || ny < 0 || nx >= boardSize || ny >= boardSize) continue;
         if (!visited.has(`${nx},${ny}`)) queue.push([nx, ny]);
     }
 }
