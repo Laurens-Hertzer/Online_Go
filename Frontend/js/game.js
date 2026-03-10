@@ -24,7 +24,7 @@ let countdownInterval = null;
 let localTerritory = { blackTerritory: 0, whiteTerritory: 0 };
 
 // Linien erzeugen
-for (let i = 0; i < 19; i++) {
+for (let i = 0; i < boardSize; i++) {
   const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
   h.setAttribute("x1", 0);
   h.setAttribute("y1", i);
@@ -132,7 +132,7 @@ svg.addEventListener("click", (e) => {
     const y = Math.round(svgP.y);
 
     // Basic client-side bounds check — server validates again anyway
-    if (x < 0 || x > 18 || y < 0 || y > 18) return;
+    if (x < 0 || x > boardSize -1 || y < 0 || y > boardSize -1 ) return;
 
     socket.send(JSON.stringify({ type: "move", x, y }));
 });
@@ -207,8 +207,8 @@ function formatTime(ms) {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-function removeGroup(x, y, color, board) {
-    if (x < 0 || y < 0 || x >= 19 || y >= 19) return;
+function removeGroup(x, y, color, board, boardSize = 19) {
+    if (x < 0 || y < 0 || x >= boardSize || y >= boardSize) return;
     if (board[y][x] !== color) return;
 
     board[y][x] = null;
