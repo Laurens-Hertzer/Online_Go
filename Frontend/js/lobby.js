@@ -8,7 +8,7 @@ window.addEventListener('DOMContentLoaded', () => {
     createGameBtn = document.getElementById("create-game-btn");
 
     createGameBtn.addEventListener("click", () => {
-    showTimerModal((seconds) => {
+    showTimerModal((seconds, boardSize) => {
         socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds, boardSize }));
     });
 });
