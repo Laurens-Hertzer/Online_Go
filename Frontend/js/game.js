@@ -4,31 +4,17 @@ const myColor = sessionStorage.getItem("myColor");
 const timers = sessionStorage.getItem("timers");
 const boardSize = parseInt(sessionStorage.getItem("boardSize")) || 19;
 
-// SVG viewBox anpassen:
-svg.setAttribute("viewBox", `-1 -1 ${boardSize + 1} ${boardSize + 1}`);
-
-// Linien dynamisch:
-for (let i = 0; i < boardSize; i++) {
-    // x1/y1/x2/y2 mit boardSize - 1 als Maximum
-    h.setAttribute("x2", boardSize - 1);
-    v.setAttribute("y2", boardSize - 1);
-}
-
-// Klick-Koordinaten Grenzcheck:
-if (x < 0 || x >= boardSize || y < 0 || y >= boardSize) return;
-
 let currentTurn = "black";
 let gameReady = false;
 let localTimers = { black: 0, white: 0 };
 let countdownInterval = null;
 let localTerritory = { blackTerritory: 0, whiteTerritory: 0 };
 
-// Linien erzeugen
 for (let i = 0; i < boardSize; i++) {
   const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
   h.setAttribute("x1", 0);
   h.setAttribute("y1", i);
-  h.setAttribute("x2", 18);
+  h.setAttribute("x2", boardSize - 1); 
   h.setAttribute("y2", i);
   svg.appendChild(h);
 
@@ -36,9 +22,11 @@ for (let i = 0; i < boardSize; i++) {
   v.setAttribute("x1", i);
   v.setAttribute("y1", 0);
   v.setAttribute("x2", i);
-  v.setAttribute("y2", 18);
+  v.setAttribute("y2", boardSize - 1); 
   svg.appendChild(v);
 }
+
+svg.setAttribute("viewBox", `-1 -1 ${boardSize + 1} ${boardSize + 1}`);
 
 const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 const socket = new WebSocket(`${protocol}//${location.host}`);
