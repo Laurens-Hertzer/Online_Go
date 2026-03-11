@@ -483,6 +483,46 @@ wss.on("connection", (ws) => {
             console.log("[Game] Rejoined:", game.id, "as", color, "by", ws.username);
             ws.send(JSON.stringify({ type: "rejoin_success", color, timers: game.getTimers() }));
         }
+        if (data.type === "pass") {
+    if (!ws.currentGame) return;
+    const game = ws.currentGame;
+    if (!game.player2) return;
+
+    const color = game.getColor(ws);
+    if (color !== game.current) {
+        ws.send(JSON.stringify({ type: "error", message: "Not your turn." }));
+        return;
+    }
+
+    game.consumeTime();
+    game.current = game.current === "black" ? "white" : "black";
+
+    const passData = JSON.stringify({
+        type: "passed",
+        color,
+        timers: game.getTimers()
+    });
+    if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(passData);
+    if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(passData);
+}
+
+if (data.type === "resign") {
+    if (!ws.currentGame) return;
+    const game = ws.currentGame;
+    if (!game.player2) return;
+
+    const color = game.getColor(ws);
+    const winner = color === "black" ? "white" : "black";
+
+    game.stopTimer();
+
+    const resignData = JSON.stringify({ type: "resigned", loser: color, winner });
+    if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(resignData);
+    if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(resignData);
+
+    games.delete(game.id);
+    broadcastGamesList();
+}
     });
 
     ws.on("close", () => {

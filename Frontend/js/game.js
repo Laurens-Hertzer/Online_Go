@@ -87,6 +87,22 @@ socket.onmessage = (msg) => {
 if (data.type === "opponent_returned") {
     document.getElementById("status").textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
 }
+if (data.type === "passed") {
+    if (data.timers) localTimers = data.timers;
+    currentTurn = currentTurn === "black" ? "white" : "black";
+    updateStatus();
+    // Status kurz anzeigen wer gepasst hat
+    document.getElementById("status").textContent = `${data.color} passed`;
+    setTimeout(updateStatus, 2000);
+}
+
+if (data.type === "resigned") {
+    gameReady = false;
+    clearInterval(countdownInterval);
+    const iWon = data.winner === myColor;
+    alert(iWon ? "Your opponent resigned. You win!" : "You resigned. Your opponent wins.");
+    window.location.href = "lobby.html";
+}
 
 if (data.type === "win_by_disconnect") {
     gameReady = false;
@@ -123,6 +139,19 @@ svg.addEventListener("click", (e) => {
     if (x < 0 || x > boardSize -1 || y < 0 || y > boardSize -1 ) return;
 
     socket.send(JSON.stringify({ type: "move", x, y }));
+});
+
+// Nach den anderen Event Listenern
+document.getElementById("pass-btn").addEventListener("click", () => {
+    if (!gameReady) return;
+    socket.send(JSON.stringify({ type: "pass" }));
+});
+
+document.getElementById("resign-btn").addEventListener("click", () => {
+    if (!gameReady) return;
+    if (confirm("Are you sure you want to resign?")) {
+        socket.send(JSON.stringify({ type: "resign" }));
+    }
 });
 
 //functions
