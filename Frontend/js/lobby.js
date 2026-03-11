@@ -16,8 +16,6 @@ window.addEventListener('DOMContentLoaded', () => {
 }); 
 
     logoutBtn.addEventListener("click", () => {
-        e.preventDefault();
-
             fetch(`/logout`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
