@@ -15,6 +15,14 @@ window.addEventListener('DOMContentLoaded', () => {
         createGameBtn.disabled = true;
     });
 
+    document.getElementById("rules-btn").addEventListener("click", () => {
+        document.getElementById("rules-modal").style.display = "flex";
+    });
+
+    document.getElementById("rules-close").addEventListener("click", () => {
+        document.getElementById("rules-modal").style.display = "none";
+    });
+
     logoutBtn.addEventListener("click", () => {
         fetch(`/logout`, {
             method: "DELETE",

@@ -14,7 +14,33 @@
     <h1>Lobby</h1>
     <div id="status-bar">
         <span id="logged-in-as"></span>
+        <button id="rules-btn">?</button>
         <button id="logout-btn">Logout</button>
+    </div>
+
+    <div id="rules-modal"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:100;">
+        <div
+            style="background:#1a1814; border:1px solid #2e2a24; padding:2rem; max-width:480px; width:90%; max-height:80vh; overflow-y:auto; position:relative;">
+            <button id="rules-close"
+                style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#c8a96e; font-size:1.2rem; cursor:pointer;">✕</button>
+            <h3 style="color:#c8a96e; font-family:'Noto Serif',serif; margin-bottom:1rem;">Rules of Go</h3>
+            <div style="color:#e8e0d0; font-size:0.85rem; line-height:1.8;">
+                <p><strong style="color:#c8a96e;">Goal:</strong> Control more territory than your opponent.</p><br>
+                <p><strong style="color:#c8a96e;">Placing stones:</strong> Players alternate placing stones on
+                    intersections. Black goes first.</p><br>
+                <p><strong style="color:#c8a96e;">Capturing:</strong> Surround an opponent's stone or group (remove all
+                    liberties) to capture it.</p><br>
+                <p><strong style="color:#c8a96e;">Liberties:</strong> Empty adjacent intersections (up, down, left,
+                    right) of a stone or group.</p><br>
+                <p><strong style="color:#c8a96e;">Suicide:</strong> You cannot place a stone that would have no
+                    liberties, unless it captures opponent stones.</p><br>
+                <p><strong style="color:#c8a96e;">Passing:</strong> You may pass your turn. If both players pass
+                    consecutively, the game ends.</p><br>
+                <p><strong style="color:#c8a96e;">Scoring:</strong> Territory (empty points you surround) + captured
+                    stones = your score.</p>
+            </div>
+        </div>
     </div>
     <ul id="game-list">
         <li>Loading games...</li>

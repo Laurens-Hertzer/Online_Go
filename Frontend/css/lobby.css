@@ -11,7 +11,11 @@
   --red: #a04040;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
   background: var(--bg);
@@ -54,7 +58,11 @@ h1 {
   transition: all 0.2s;
   margin-left: auto;
 }
-#logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+#logout-btn:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
 
 #game-list {
   list-style: none;
@@ -75,7 +83,10 @@ h1 {
   font-size: 0.85rem;
   transition: border-color 0.2s;
 }
-#game-list li:hover { border-color: var(--gold-dim); }
+
+#game-list li:hover {
+  border-color: var(--gold-dim);
+}
 
 #game-list button {
   background: transparent;
@@ -87,7 +98,11 @@ h1 {
   cursor: pointer;
   transition: all 0.2s;
 }
-#game-list button:hover { background: var(--gold-dim); color: var(--bg); }
+
+#game-list button:hover {
+  background: var(--gold-dim);
+  color: var(--bg);
+}
 
 #create-game-btn {
   background: transparent;
@@ -100,16 +115,71 @@ h1 {
   cursor: pointer;
   transition: all 0.2s;
 }
-#create-game-btn:hover { background: var(--gold); color: var(--bg); }
 
-#timer-modal > div {
+#create-game-btn:hover {
+  background: var(--gold);
+  color: var(--bg);
+}
+
+#timer-modal>div {
   background: var(--surface) !important;
   border: 1px solid var(--border);
   color: var(--text) !important;
-  box-shadow: 0 24px 48px rgba(0,0,0,0.6);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
 }
-#timer-modal h3 { font-family: 'Noto Serif', serif; font-weight: 400; color: var(--gold); font-size: 0.9rem; letter-spacing: 0.1em; margin-bottom: 1rem; }
-#timer-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.75rem; font-size: 1rem; width: 100%; outline: none; }
-#timer-input:focus { border-color: var(--gold-dim); }
-#timer-confirm { background: transparent; border: 1px solid var(--gold-dim); color: var(--gold); font-family: 'Noto Serif', serif; letter-spacing: 0.1em; padding: 0.5rem 1.5rem; cursor: pointer; transition: all 0.2s; margin-top: 1rem; }
-#timer-confirm:hover { background: var(--gold-dim); color: var(--bg); }
+
+#timer-modal h3 {
+  font-family: 'Noto Serif', serif;
+  font-weight: 400;
+  color: var(--gold);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+}
+
+#timer-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+}
+
+#timer-input:focus {
+  border-color: var(--gold-dim);
+}
+
+#timer-confirm {
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: 'Noto Serif', serif;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1rem;
+}
+
+#timer-confirm:hover {
+  background: var(--gold-dim);
+  color: var(--bg);
+}
+
+#rules-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--gold);
+  font-family: 'Noto Serif', serif;
+  font-size: 0.85rem;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#rules-btn:hover {
+  border-color: var(--gold);
+}
