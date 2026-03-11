@@ -52,18 +52,24 @@ socket.onopen = () => {
 socket.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
 
-    // Server confirmed we are in the game — allow moves now
     if (data.type === "rejoin_success") {
-    gameReady = true;
-    if (data.timers) localTimers = data.timers;
-    if (data.territory) localTerritory = {
-        blackTerritory: data.territory.blackTerritory ?? 0,
-        whiteTerritory: data.territory.whiteTerritory ?? 0,
-        blackCaptured: data.territory.blackCaptured ?? 0,
-        whiteCaptured: data.territory.whiteCaptured ?? 0,
-    };
-    updateStatus();
-}
+        gameReady = true;
+        if (data.timers) localTimers = data.timers;
+        currentTurn = data.currentTurn;
+        if (data.territory) localTerritory = {
+            blackTerritory: data.territory.blackTerritory ?? 0,
+            whiteTerritory: data.territory.whiteTerritory ?? 0,
+            blackCaptured: data.territory.blackCaptured ?? 0,
+            whiteCaptured: data.territory.whiteCaptured ?? 0,
+        };
+
+        if (data.board) {
+            rebuildBoard(data.board, data.boardSize);
+        }
+
+        startLocalCountdown();
+        updateStatus();
+    }
 
     if (data.type === "update") {
         placeStone(data.x, data.y, data.color, data.captured);
@@ -118,16 +124,16 @@ socket.onmessage = (msg) => {
         alert("You win! Your opponent didn't reconnect.");
         window.location.href = "lobby.html";
     }
-    
+
     if (data.type === "game_over") {
-    gameReady = false;
-    clearInterval(countdownInterval);
-    const myScore = myColor === "black" ? data.blackScore : data.whiteScore;
-    const oppScore = myColor === "black" ? data.whiteScore : data.blackScore;
-    const result = data.winner === myColor ? "You win!" : data.winner === "draw" ? "Draw!" : "You lose!";
-    alert(`Game over! ${result}\nYour score: ${myScore} | Opponent: ${oppScore}`);
-    window.location.href = "lobby.html";
-}
+        gameReady = false;
+        clearInterval(countdownInterval);
+        const myScore = myColor === "black" ? data.blackScore : data.whiteScore;
+        const oppScore = myColor === "black" ? data.whiteScore : data.blackScore;
+        const result = data.winner === myColor ? "You win!" : data.winner === "draw" ? "Draw!" : "You lose!";
+        alert(`Game over! ${result}\nYour score: ${myScore} | Opponent: ${oppScore}`);
+        window.location.href = "lobby.html";
+    }
 };
 
 socket.onerror = () => {
@@ -244,4 +250,18 @@ function formatTime(ms) {
     const minutes = Math.floor(total / 60);
     const seconds = total % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function rebuildBoard(board, size) {
+    // Alle bestehenden Steine entfernen
+    svg.querySelectorAll("circle").forEach(el => el.remove());
+    
+    // Brett neu zeichnen
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            if (board[y][x] !== null) {
+                placeStone(x, y, board[y][x], []);
+            }
+        }
+    }
 }

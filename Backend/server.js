@@ -504,6 +504,7 @@ wss.on("connection", (ws) => {
                 type: "rejoin_success",
                 color,
                 timers: game.getTimers(),
+                currentTurn: game.current,
                 territory: {
                     ...calculateTerritory(game.board, game.boardSize),
                     blackCaptured: game.blackCaptured,
@@ -543,9 +544,11 @@ wss.on("connection", (ws) => {
 
                 if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(endData);
                 if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(endData);
+
+                game.player1.currentGame = null;
+                game.player2.currentGame = null;
                 games.delete(game.id);
                 broadcastGamesList();
-                return;
             }
 
             game.consumeTime();
@@ -574,6 +577,8 @@ wss.on("connection", (ws) => {
             if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(resignData);
             if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(resignData);
 
+            game.player1.currentGame = null;
+            game.player2.currentGame = null;
             games.delete(game.id);
             broadcastGamesList();
         }
