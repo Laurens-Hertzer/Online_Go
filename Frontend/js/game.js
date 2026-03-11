@@ -1,5 +1,5 @@
 const svg = document.getElementById("goboard");
-const gameId =sessionStorage.getItem("gameId");
+const gameId = sessionStorage.getItem("gameId");
 const myColor = sessionStorage.getItem("myColor");
 const timers = sessionStorage.getItem("timers");
 const boardSize = parseInt(sessionStorage.getItem("boardSize")) || 19;
@@ -11,19 +11,19 @@ let countdownInterval = null;
 let localTerritory = { blackTerritory: 0, whiteTerritory: 0 };
 
 for (let i = 0; i < boardSize; i++) {
-  const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  h.setAttribute("x1", 0);
-  h.setAttribute("y1", i);
-  h.setAttribute("x2", boardSize - 1); 
-  h.setAttribute("y2", i);
-  svg.appendChild(h);
+    const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    h.setAttribute("x1", 0);
+    h.setAttribute("y1", i);
+    h.setAttribute("x2", boardSize - 1);
+    h.setAttribute("y2", i);
+    svg.appendChild(h);
 
-  const v = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  v.setAttribute("x1", i);
-  v.setAttribute("y1", 0);
-  v.setAttribute("x2", i);
-  v.setAttribute("y2", boardSize - 1); 
-  svg.appendChild(v);
+    const v = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    v.setAttribute("x1", i);
+    v.setAttribute("y1", 0);
+    v.setAttribute("x2", i);
+    v.setAttribute("y2", boardSize - 1);
+    svg.appendChild(v);
 }
 
 svg.setAttribute("viewBox", `-1 -1 ${boardSize + 1} ${boardSize + 1}`);
@@ -32,7 +32,7 @@ const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 const socket = new WebSocket(`${protocol}//${location.host}`);
 
 socket.onopen = () => {
-if (!gameId || !myColor) {
+    if (!gameId || !myColor) {
         // Should not happen if the user arrived here via lobby.html normally.
         // Could happen if someone navigates to game.html directly.
         console.error("[Game] No gameId or color in sessionStorage");
@@ -70,46 +70,46 @@ socket.onmessage = (msg) => {
     }
 
     if (data.type === "timeout") {
-    gameReady = false;
-    clearInterval(countdownInterval);
-    alert(`Time's up! ${data.winner} wins!`);
-    window.location.href = "lobby.html";
+        gameReady = false;
+        clearInterval(countdownInterval);
+        alert(`Time's up! ${data.winner} wins!`);
+        window.location.href = "lobby.html";
     }
     if (data.type === "error") {
         console.error("[Server error]", data.message);
     }
     if (data.type === "opponent_left") {
-    console.log("[Game] Opponent disconnected");
-    // Nur informieren, nicht sofort weiterleiten
-    document.getElementById("status").textContent = "Opponent disconnected. Waiting 30s...";
-}
+        console.log("[Game] Opponent disconnected");
+        // Nur informieren, nicht sofort weiterleiten
+        document.getElementById("status").textContent = "Opponent disconnected. Waiting 30s...";
+    }
 
-if (data.type === "opponent_returned") {
-    document.getElementById("status").textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
-}
-if (data.type === "passed") {
-    if (data.timers) localTimers = data.timers;
-    currentTurn = currentTurn === "black" ? "white" : "black";
-    updateStatus();
-    // Status kurz anzeigen wer gepasst hat
-    document.getElementById("status").textContent = `${data.color} passed`;
-    setTimeout(updateStatus, 2000);
-}
+    if (data.type === "opponent_returned") {
+        document.getElementById("status").textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
+    }
+    if (data.type === "passed") {
+        if (data.timers) localTimers = data.timers;
+        currentTurn = currentTurn === "black" ? "white" : "black";
+        updateStatus();
+        // Status kurz anzeigen wer gepasst hat
+        document.getElementById("status").textContent = `${data.color} passed`;
+        setTimeout(updateStatus, 2000);
+    }
 
-if (data.type === "resigned") {
-    gameReady = false;
-    clearInterval(countdownInterval);
-    const iWon = data.winner === myColor;
-    alert(iWon ? "Your opponent resigned. You win!" : "You resigned. Your opponent wins.");
-    window.location.href = "lobby.html";
-}
+    if (data.type === "resigned") {
+        gameReady = false;
+        clearInterval(countdownInterval);
+        const iWon = data.winner === myColor;
+        alert(iWon ? "Your opponent resigned. You win!" : "You resigned. Your opponent wins.");
+        window.location.href = "lobby.html";
+    }
 
-if (data.type === "win_by_disconnect") {
-    gameReady = false;
-    clearInterval(countdownInterval);
-    alert("You win! Your opponent didn't reconnect.");
-    window.location.href = "lobby.html";
-}
+    if (data.type === "win_by_disconnect") {
+        gameReady = false;
+        clearInterval(countdownInterval);
+        alert("You win! Your opponent didn't reconnect.");
+        window.location.href = "lobby.html";
+    }
 };
 
 socket.onerror = () => {
@@ -136,7 +136,7 @@ svg.addEventListener("click", (e) => {
     const y = Math.round(svgP.y);
 
     // Basic client-side bounds check — server validates again anyway
-    if (x < 0 || x > boardSize -1 || y < 0 || y > boardSize -1 ) return;
+    if (x < 0 || x > boardSize - 1 || y < 0 || y > boardSize - 1) return;
 
     socket.send(JSON.stringify({ type: "move", x, y }));
 });
@@ -164,7 +164,7 @@ function placeStone(x, y, color, captured) {
         });
     }
 
-    const id = `stone-${x}-${y}`;                
+    const id = `stone-${x}-${y}`;
     const stone = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     stone.setAttribute("id", id);
     stone.setAttribute("cx", x);
@@ -208,11 +208,15 @@ function updateStatus() {
         timeOpponentEl.textContent = `Opponent: ${formatTime(oppTime)}`;
     }
     if (territoryEl) {
-        const myTerritory = myColor === "black" ? localTerritory.blackTerritory : localTerritory.whiteTerritory;
+        const myTerritory = myColor === "black"
+            ? localTerritory.blackTerritory + localTerritory.blackCaptured
+            : localTerritory.whiteTerritory + localTerritory.whiteCaptured;
         territoryEl.textContent = `Your territory: ${myTerritory}`;
     }
     if (territoryOpponentEl) {
-        const oppTerritory = myColor === "black" ? localTerritory.whiteTerritory : localTerritory.blackTerritory;
+        const oppTerritory = myColor === "black"
+            ? localTerritory.whiteTerritory + localTerritory.whiteCaptured
+            : localTerritory.blackTerritory + localTerritory.blackCaptured;
         territoryOpponentEl.textContent = `Opponent's territory: ${oppTerritory}`;
     }
 }

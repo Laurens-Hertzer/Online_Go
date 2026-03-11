@@ -30,15 +30,15 @@ async function initDatabase() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        
+
         const result = await pool.query('SELECT COUNT(*) FROM users');
         if (result.rows[0].count === '0') {
             const testUsers = [
-                { username: "test" , password: "1" },
+                { username: "test", password: "1" },
                 { username: "test2", password: "2" },
                 { username: "test3", password: "3" }
             ];
-            
+
             for (const user of testUsers) {
                 const hash = await bcrypt.hash(user.password, 10);
                 await pool.query(
@@ -48,7 +48,7 @@ async function initDatabase() {
             }
             console.log('Test-User erstellt');
         }
-        
+
         console.log('Datenbank initialisiert');
     } catch (err) {
         console.error('Fehler beim Initialisieren der Datenbank:', err);
@@ -67,7 +67,7 @@ const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET,
     resave: false, // don't save session if unmodified
     saveUninitialized: false, // don't create session until something stored
-        cookie: {
+    cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Auto true in Render
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-Origin
@@ -95,13 +95,13 @@ function requireAuth(req, res, next) {
     next();
 }
 
-app.post("/register", async(req, res) => {
+app.post("/register", async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
         return res.status(422).json({ error: "You have to put in all the required inputs." })
     }
-    
+
     if (username.length < 3) {
         return res.status(422).json({ error: "Username has to be atleast 3 letters." });
     }
@@ -110,12 +110,12 @@ app.post("/register", async(req, res) => {
     }
 
     try {
-        const existingUser = await pool.query('SELECT id FROM users WHERE username = $1',[username]);
-            if (existingUser.rows.length > 0) {
+        const existingUser = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+        if (existingUser.rows.length > 0) {
             return res.status(409).json({ error: "Username already taken" });
         }
 
-       
+
 
         const passwordHash = await bcrypt.hash(password, 10);
 
@@ -131,7 +131,7 @@ app.post("/register", async(req, res) => {
     }
 });
 
-app.post("/login", async(req, res) => {
+app.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -166,7 +166,7 @@ app.post("/login", async(req, res) => {
             console.log("[Login] Session saved, userId:", req.session.userId);
             res.json({ message: "success", username: user.username });
         });
-        } catch (err) {                         
+    } catch (err) {
         console.error("[Login] Error:", err);
         res.status(500).json({ error: "Internal server error." });
     }
@@ -174,9 +174,9 @@ app.post("/login", async(req, res) => {
 
 app.get("/verify", (req, res) => {
     if (req.session.userId) {
-        return res.send({username: req.session.username});
+        return res.send({ username: req.session.username });
     } else {
-        return res.status(401).json({error: "You have to log in first."});
+        return res.status(401).json({ error: "You have to log in first." });
     }
 });
 
@@ -186,16 +186,16 @@ app.delete("/logout", (req, res) => {
     }
     req.session.destroy((err) => {
         if (err) {
-            return res.status(500).json({ error: "Logout failed."});
+            return res.status(500).json({ error: "Logout failed." });
         }
         res.json({ message: "Succesful logout" });
     });
 });
 
 app.get('/', (req, res) => {
-    if (!req.session.userId){
+    if (!req.session.userId) {
         res.sendFile(path.join(__dirname, '../Frontend', 'index.html'));
-    }else{
+    } else {
         res.sendFile(path.join(__dirname, '../Frontend', 'lobby.html'));
     }
 });
@@ -213,7 +213,7 @@ app.use(express.static(path.join(__dirname, '../Frontend')));
 
 // Catch-All for SPA (anti404 when reloading) 
 app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../Frontend/index.html")); 
+    res.sendFile(path.join(__dirname, "../Frontend/index.html"));
 });
 
 const server = app.listen(process.env.PORT || 3000, () => {
@@ -261,54 +261,62 @@ class Game {
         this.deleteTimeout = null;
 
         const ms = (timePerPlayer || 600) * 1000;
-        this.blackTime = ms; 
-        this.whiteTime = ms; 
+
+        this.blackTime = ms;
+        this.whiteTime = ms;
+
         this.turnStartedAt = null;
         this.timerInterval = null;
+
         this.boardSize = boardSize || 19;
         this.board = Array.from({ length: this.boardSize }, () => Array(this.boardSize).fill(null));
+
+
+        this.blackCaptured = 0;
+        this.whiteCaptured = 0;
+
         this.current = "black"; //in go black starts btw
     }
-        startTimer() {
-    this.turnStartedAt = Date.now();
-    this.timerInterval = setInterval(() => {
-        const elapsed = Date.now() - this.turnStartedAt;
-        const remaining = this.current === "black"
-            ? this.blackTime - elapsed
-            : this.whiteTime - elapsed;
-        if (remaining <= 0) {
-            this.stopTimer();
-            const loser = this.current;
-            const winner = loser === "black" ? "white" : "black";
-            const msg = JSON.stringify({ type: "timeout", loser, winner });
-            if (this.player1?.readyState === WebSocket.OPEN) this.player1.send(msg);
-            if (this.player2?.readyState === WebSocket.OPEN) this.player2.send(msg);
-        }
-    }, 1000);
-}
-
-stopTimer() {
-    if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
-}
-
-consumeTime() {
-    if (!this.turnStartedAt) return;
-    const elapsed = Date.now() - this.turnStartedAt;
-    if (this.current === "black") {
-        this.blackTime = Math.max(0, this.blackTime - elapsed);
-    } else {
-        this.whiteTime = Math.max(0, this.whiteTime - elapsed);
+    startTimer() {
+        this.turnStartedAt = Date.now();
+        this.timerInterval = setInterval(() => {
+            const elapsed = Date.now() - this.turnStartedAt;
+            const remaining = this.current === "black"
+                ? this.blackTime - elapsed
+                : this.whiteTime - elapsed;
+            if (remaining <= 0) {
+                this.stopTimer();
+                const loser = this.current;
+                const winner = loser === "black" ? "white" : "black";
+                const msg = JSON.stringify({ type: "timeout", loser, winner });
+                if (this.player1?.readyState === WebSocket.OPEN) this.player1.send(msg);
+                if (this.player2?.readyState === WebSocket.OPEN) this.player2.send(msg);
+            }
+        }, 1000);
     }
-    this.turnStartedAt = Date.now();
-}
 
-getTimers() {
-    const elapsed = this.turnStartedAt ? Date.now() - this.turnStartedAt : 0;
-    return {
-        black: this.current === "black" ? Math.max(0, this.blackTime - elapsed) : this.blackTime,
-        white: this.current === "white" ? Math.max(0, this.whiteTime - elapsed) : this.whiteTime,
-    };
-}
+    stopTimer() {
+        if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
+    }
+
+    consumeTime() {
+        if (!this.turnStartedAt) return;
+        const elapsed = Date.now() - this.turnStartedAt;
+        if (this.current === "black") {
+            this.blackTime = Math.max(0, this.blackTime - elapsed);
+        } else {
+            this.whiteTime = Math.max(0, this.whiteTime - elapsed);
+        }
+        this.turnStartedAt = Date.now();
+    }
+
+    getTimers() {
+        const elapsed = this.turnStartedAt ? Date.now() - this.turnStartedAt : 0;
+        return {
+            black: this.current === "black" ? Math.max(0, this.blackTime - elapsed) : this.blackTime,
+            white: this.current === "white" ? Math.max(0, this.whiteTime - elapsed) : this.whiteTime,
+        };
+    }
 
     getColor(ws) {
         if (ws.userId === this.player1Id) return "black";
@@ -317,41 +325,46 @@ getTimers() {
     }
 
     playMove(x, y, ws) {
-    if (x < 0 || x >= this.boardSize || y < 0 || y >= this.boardSize) {
-        return { ok: false, reason: "Ungültige Koordinaten" };
+        if (x < 0 || x >= this.boardSize || y < 0 || y >= this.boardSize) {
+            return { ok: false, reason: "Ungültige Koordinaten" };
+        }
+
+        const color = this.getColor(ws);
+        if (color !== this.current) {
+            return { ok: false, reason: "Not your turn." };
+        }
+
+        if (this.board[y][x] !== null) {
+            return { ok: false, reason: "Feld besetzt" };
+        }
+
+        // Stein setzen
+        this.board[y][x] = color;
+
+        // Gegnerische Gruppen ohne Freiheiten entfernen
+        const opponent = color === "black" ? "white" : "black";
+        const neighbors = [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]];
+
+        const captured = [];
+        for (const [nx, ny] of neighbors) {
+            if (nx < 0 || ny < 0 || nx >= this.boardSize || ny >= this.boardSize) continue;
+            if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board, this.boardSize)) {
+                removeGroup(nx, ny, opponent, this.board, captured, this.boardSize);
+                if (color === "black") {
+                    this.blackCaptured += captured.length;
+                } else {
+                    this.whiteCaptured += captured.length;
+                }
+            }
+        }
+        if (canTakeStone(x, y, color, this.board, this.boardSize)) {
+            this.board[y][x] = null; // Zug rückgängig machen
+            return { ok: false, reason: "Suicide move not allowed." };
+        }
+        this.consumeTime(color);
+        this.current = this.current === "black" ? "white" : "black";
+        return { ok: true, color, captured };
     }
-
-    const color = this.getColor(ws);
-    if (color !== this.current) {
-        return { ok: false, reason: "Not your turn." };
-    }
-
-    if (this.board[y][x] !== null) {
-        return { ok: false, reason: "Feld besetzt" };
-    }
-
-    // Stein setzen
-    this.board[y][x] = color;
-
-    // Gegnerische Gruppen ohne Freiheiten entfernen
-    const opponent = color === "black" ? "white" : "black";
-    const neighbors = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
-
-    const captured = [];
-    for (const [nx, ny] of neighbors) {
-    if (nx < 0 || ny < 0 || nx >= this.boardSize || ny >= this.boardSize) continue;
-    if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board, this.boardSize)) {
-        removeGroup(nx, ny, opponent, this.board, captured, this.boardSize);
-    }
-}
-    if (canTakeStone(x, y, color, this.board, this.boardSize)) {
-    this.board[y][x] = null; // Zug rückgängig machen
-    return { ok: false, reason: "Suicide move not allowed." };
-}
-    this.consumeTime(color);
-    this.current = this.current === "black" ? "white" : "black";
-    return { ok: true, color, captured };
-}
 }
 
 
@@ -433,7 +446,9 @@ wss.on("connection", (ws) => {
                 color: result.color,
                 captured: result.captured,
                 timers: game.getTimers(),
-                territory: calculateTerritory(game.board, game.boardSize) 
+                territory: calculateTerritory(game.board, game.boardSize),
+                blackCaptured: game.blackCaptured,
+                whiteCaptured: game.whiteCaptured
             });
 
             if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(moveData);
@@ -460,10 +475,10 @@ wss.on("connection", (ws) => {
             if (game.deleteTimeout) {
                 clearTimeout(game.deleteTimeout);
                 game.deleteTimeout = null;
-            
+
                 const other = color === "black" ? game.player2 : game.player1;
                 if (other?.readyState === WebSocket.OPEN) {
-                other.send(JSON.stringify({ type: "opponent_returned" }));
+                    other.send(JSON.stringify({ type: "opponent_returned" }));
                 }
             }
 
@@ -481,48 +496,57 @@ wss.on("connection", (ws) => {
 
             ws.currentGame = game;
             console.log("[Game] Rejoined:", game.id, "as", color, "by", ws.username);
-            ws.send(JSON.stringify({ type: "rejoin_success", color, timers: game.getTimers() }));
+            ws.send(JSON.stringify({
+                type: "rejoin_success",
+                color,
+                timers: game.getTimers(),
+                territory: {
+                    ...calculateTerritory(game.board, game.boardSize),
+                    blackCaptured: game.blackCaptured,
+                    whiteCaptured: game.whiteCaptured
+                }
+            }));
         }
         if (data.type === "pass") {
-    if (!ws.currentGame) return;
-    const game = ws.currentGame;
-    if (!game.player2) return;
+            if (!ws.currentGame) return;
+            const game = ws.currentGame;
+            if (!game.player2) return;
 
-    const color = game.getColor(ws);
-    if (color !== game.current) {
-        ws.send(JSON.stringify({ type: "error", message: "Not your turn." }));
-        return;
-    }
+            const color = game.getColor(ws);
+            if (color !== game.current) {
+                ws.send(JSON.stringify({ type: "error", message: "Not your turn." }));
+                return;
+            }
 
-    game.consumeTime();
-    game.current = game.current === "black" ? "white" : "black";
+            game.consumeTime();
+            game.current = game.current === "black" ? "white" : "black";
 
-    const passData = JSON.stringify({
-        type: "passed",
-        color,
-        timers: game.getTimers()
-    });
-    if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(passData);
-    if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(passData);
-}
+            const passData = JSON.stringify({
+                type: "passed",
+                color,
+                timers: game.getTimers()
+            });
+            if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(passData);
+            if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(passData);
+        }
 
-if (data.type === "resign") {
-    if (!ws.currentGame) return;
-    const game = ws.currentGame;
-    if (!game.player2) return;
+        if (data.type === "resign") {
+            if (!ws.currentGame) return;
+            const game = ws.currentGame;
+            if (!game.player2) return;
 
-    const color = game.getColor(ws);
-    const winner = color === "black" ? "white" : "black";
+            const color = game.getColor(ws);
+            const winner = color === "black" ? "white" : "black";
 
-    game.stopTimer();
+            game.stopTimer();
 
-    const resignData = JSON.stringify({ type: "resigned", loser: color, winner });
-    if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(resignData);
-    if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(resignData);
+            const resignData = JSON.stringify({ type: "resigned", loser: color, winner });
+            if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(resignData);
+            if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(resignData);
 
-    games.delete(game.id);
-    broadcastGamesList();
-}
+            games.delete(game.id);
+            broadcastGamesList();
+        }
     });
 
     ws.on("close", () => {
@@ -544,7 +568,7 @@ if (data.type === "resign") {
             if (oneDisconnected && !game.deleteTimeout) {
                 const remaining = game.player1Disconnected ? game.player2 : game.player1;
                 if (remaining?.readyState === WebSocket.OPEN) {
-                    remaining.send(JSON.stringify({ 
+                    remaining.send(JSON.stringify({
                         type: "opponent_left",
                         message: "Your opponent disconnected. They have 30 seconds to reconnect."
                     }));
@@ -553,11 +577,11 @@ if (data.type === "resign") {
                 game.deleteTimeout = setTimeout(() => {
                     const winner = game.player1Disconnected ? game.player2 : game.player1;
                     if (winner?.readyState === WebSocket.OPEN) {
-                    winner.send(JSON.stringify({ 
-                        type: "win_by_disconnect",
-                        message: "Your opponent didn't reconnect. You win!"
-                    })); 
-                }
+                        winner.send(JSON.stringify({
+                            type: "win_by_disconnect",
+                            message: "Your opponent didn't reconnect. You win!"
+                        }));
+                    }
                     games.delete(id);
                     console.log("[Game] Deleted after timeout:", id);
                     broadcastGamesList();
@@ -630,7 +654,7 @@ function removeGroup(x, y, color, board, captured = [], boardSize = 19) {
     if (board[y][x] !== color) return;
     board[y][x] = null;
     captured.push([x, y]);
-    removeGroup(x - 1, y, color, board, captured, boardSize); 
+    removeGroup(x - 1, y, color, board, captured, boardSize);
     removeGroup(x + 1, y, color, board, captured, boardSize);
     removeGroup(x, y - 1, color, board, captured, boardSize);
     removeGroup(x, y + 1, color, board, captured, boardSize);
@@ -641,8 +665,8 @@ function calculateTerritory(board, boardSize = 19) {
     let blackTerritory = 0;
     let whiteTerritory = 0;
 
-for (let y = 0; y < boardSize; y++) {
-    for (let x = 0; x < boardSize; x++) {
+    for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
             if (board[y][x] !== null) continue;
             const key = `${x},${y}`;
             if (visited.has(key)) continue;
@@ -653,27 +677,27 @@ for (let y = 0; y < boardSize; y++) {
             const queue = [[x, y]];
 
             while (queue.length > 0) {
-    const [cx, cy] = queue.pop();
-    const k = `${cx},${cy}`;
-    if (visited.has(k)) continue;
+                const [cx, cy] = queue.pop();
+                const k = `${cx},${cy}`;
+                if (visited.has(k)) continue;
 
-    if (board[cy][cx] !== null) {
-        // Stein — als Grenze merken aber NICHT zu visited hinzufügen
-        // damit er für andere Regionen wieder als Grenze erkannt wird
-        borders.add(board[cy][cx]);
-        continue;
-    }
+                if (board[cy][cx] !== null) {
+                    // Stein — als Grenze merken aber NICHT zu visited hinzufügen
+                    // damit er für andere Regionen wieder als Grenze erkannt wird
+                    borders.add(board[cy][cx]);
+                    continue;
+                }
 
-    visited.add(k); // ← nur leere Felder zu visited hinzufügen
+                visited.add(k); // ← nur leere Felder zu visited hinzufügen
 
-    region.push([cx, cy]);
+                region.push([cx, cy]);
 
-    // NEU
-for (const [nx, ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]) {
-    if (nx < 0 || ny < 0 || nx >= boardSize || ny >= boardSize) continue;
-        if (!visited.has(`${nx},${ny}`)) queue.push([nx, ny]);
-    }
-}
+                // NEU
+                for (const [nx, ny] of [[cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]]) {
+                    if (nx < 0 || ny < 0 || nx >= boardSize || ny >= boardSize) continue;
+                    if (!visited.has(`${nx},${ny}`)) queue.push([nx, ny]);
+                }
+            }
 
             // Gebiet zuordnen
             if (borders.size === 1) {

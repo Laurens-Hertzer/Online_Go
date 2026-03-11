@@ -17,17 +17,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 credentials: "include",
                 body: JSON.stringify({ username, password })
             })
-            .then(async res => {
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || "Login fehlgeschlagen");
-                }
-                return res.json();
-            })
-            .then(() => {
-                window.location.href = "lobby.html";
-            })
-            .catch(err => alert(err.message));
+                .then(async res => {
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        throw new Error(err.error || "Login fehlgeschlagen");
+                    }
+                    return res.json();
+                })
+                .then(() => {
+                    window.location.href = "lobby.html";
+                })
+                .catch(err => alert(err.message));
         });
     }
 
@@ -44,18 +44,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 credentials: "include",
                 body: JSON.stringify({ username, password })
             })
-            .then(async res => {
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || "Registrierung fehlgeschlagen");
-                }
-                return res.json();
-            })
-            .then(data => {
-                alert(data.message);
-                // Optional: Auto-Login nach Registrierung
-            })
-            .catch(err => alert(err.message));
+                .then(async res => {
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        throw new Error(err.error || "Registrierung fehlgeschlagen");
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    alert(data.message);
+                    // Optional: Auto-Login nach Registrierung
+                })
+                .catch(err => alert(err.message));
         });
     }
 });

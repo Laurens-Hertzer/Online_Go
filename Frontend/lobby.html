@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="css/lobby.css">
     <link rel="icon" href="favicon.png">
 </head>
+
 <body>
     <h1>Lobby</h1>
     <div id="status-bar">
@@ -19,20 +21,22 @@
     </ul>
     <button id="create-game-btn">Create New Game</button>
 
-<div id="timer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
-    <div style="background:white; padding:2rem; border-radius:8px;">
-        <h3>Time per player (minutes)</h3>
-        <input type="number" id="timer-input" value="10" min="1" max="120">
-        <br><br>
-        <h3>Board size</h3>
-    <select id="board-size-input">
-        <option value="9">9×9 (Beginner)</option>
-        <option value="13">13×13 (Intermediate)</option>
-        <option value="19" selected>19×19 (Full)</option>
-    </select>
-    <h3>Time per player (minutes)</h3>
-        <button id="timer-confirm">Start</button>
+    <div id="timer-modal"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div style="background:white; padding:2rem; border-radius:8px;">
+            <h3>Time per player (minutes)</h3>
+            <input type="number" id="timer-input" value="10" min="1" max="120">
+            <br><br>
+            <h3>Board size</h3>
+            <select id="board-size-input">
+                <option value="9">9×9 (Beginner)</option>
+                <option value="13">13×13 (Intermediate)</option>
+                <option value="19" selected>19×19 (Full)</option>
+            </select>
+            <h3>Time per player (minutes)</h3>
+            <button id="timer-confirm">Start</button>
+        </div>
     </div>
-</div>
 </body>
+
 </html>

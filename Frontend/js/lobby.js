@@ -9,18 +9,18 @@ window.addEventListener('DOMContentLoaded', () => {
     logoutBtn = document.getElementById("logout-btn");
 
     createGameBtn.addEventListener("click", () => {
-    showTimerModal((seconds, boardSize) => {
-        socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds, boardSize }));
+        showTimerModal((seconds, boardSize) => {
+            socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds, boardSize }));
+        });
+        createGameBtn.disabled = true;
     });
-    createGameBtn.disabled = true;
-}); 
 
     logoutBtn.addEventListener("click", () => {
-            fetch(`/logout`, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include"
-            })
+        fetch(`/logout`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+        })
             .then(async res => {
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
@@ -31,32 +31,32 @@ window.addEventListener('DOMContentLoaded', () => {
             .then(() => {
                 window.location.href = "/";
             })
-            .catch(err => console.error("Logout error:", err));           
-});
+            .catch(err => console.error("Logout error:", err));
+    });
     connectWebSocket();
 });
 
 function connectWebSocket() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     socket = new WebSocket(`${protocol}//${location.host}`);
-    
+
     socket.onopen = () => {
-    console.log('WebSocket connected');
-};
-socket.onmessage = (event) => {
+        console.log('WebSocket connected');
+    };
+    socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
+
         if (data.games) {
             renderGameList(data.games);
         }
-        
+
         if (data.type === "start") {
-    sessionStorage.setItem("gameId", data.gameId);
-    sessionStorage.setItem("myColor", data.color);
-    sessionStorage.setItem("boardSize", data.boardSize); // ← neu
-    window.location.href = "game.html";
-}
-        
+            sessionStorage.setItem("gameId", data.gameId);
+            sessionStorage.setItem("myColor", data.color);
+            sessionStorage.setItem("boardSize", data.boardSize); // ← neu
+            window.location.href = "game.html";
+        }
+
         if (data.type === 'error') {
             console.error('Error from server:', data.message);
             alert('Error: ' + data.message);
@@ -69,7 +69,7 @@ socket.onmessage = (event) => {
 
     socket.onclose = () => {
         console.log('WebSocket closed');
-        
+
     };
 }
 
@@ -84,11 +84,10 @@ function renderGameList(games) {
             (game, index) => `
         <li>
             <span>Game ${index + 1}: ${game.player1 || "Waiting..."} ${game.player2 ? "vs " + game.player2 : ""}</span>
-            ${
-                !game.player2
+            ${!game.player2
                     ? `<button onclick="joinGame('${game.gameId}')">Join</button>`
                     : "<span>Full</span>"
-            }
+                }
         </li>
     `
         )
