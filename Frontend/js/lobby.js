@@ -1,16 +1,39 @@
 let socket;
 let gameList;
 let createGameBtn;
-let time;
+let logoutBtn;
 
 window.addEventListener('DOMContentLoaded', () => {
     gameList = document.getElementById("game-list");
     createGameBtn = document.getElementById("create-game-btn");
+    logoutBtn = document.getElementById("logout-btn");
 
     createGameBtn.addEventListener("click", () => {
     showTimerModal((seconds, boardSize) => {
         socket.send(JSON.stringify({ action: "create", timePerPlayer: seconds, boardSize }));
     });
+    createGameBtn.disabled = true;
+}); 
+
+    logoutBtn.addEventListener("click", () => {
+        e.preventDefault();
+
+            fetch(`/logout`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include"
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || "Logout fehlgeschlagen");
+                }
+                return res.json();
+            })
+            .then(() => {
+                window.location.href = "/";
+            })
+            .catch(err => console.error("Logout error:", err));           
 });
     connectWebSocket();
 });
