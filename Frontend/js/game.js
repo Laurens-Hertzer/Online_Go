@@ -54,17 +54,25 @@ socket.onmessage = (msg) => {
 
     // Server confirmed we are in the game — allow moves now
     if (data.type === "rejoin_success") {
-        gameReady = true;
-        if (data.timers) localTimers = data.timers;
-        console.log("[Game] Ready");
-        startLocalCountdown();
-        updateStatus();
-    }
+    gameReady = true;
+    if (data.timers) localTimers = data.timers;
+    if (data.territory) localTerritory = {
+        blackTerritory: data.territory.blackTerritory ?? 0,
+        whiteTerritory: data.territory.whiteTerritory ?? 0,
+        blackCaptured: data.territory.blackCaptured ?? 0,
+        whiteCaptured: data.territory.whiteCaptured ?? 0,
+    };
+    updateStatus();
+}
 
     if (data.type === "update") {
         placeStone(data.x, data.y, data.color, data.captured);
         if (data.timers) localTimers = data.timers;
-        if (data.territory) localTerritory = data.territory; // ← neu
+        if (data.territory) localTerritory = {
+            ...data.territory,
+            blackCaptured: data.blackCaptured ?? 0,
+            whiteCaptured: data.whiteCaptured ?? 0,
+        };
         currentTurn = currentTurn === "black" ? "white" : "black";
         updateStatus();
     }
@@ -110,6 +118,16 @@ socket.onmessage = (msg) => {
         alert("You win! Your opponent didn't reconnect.");
         window.location.href = "lobby.html";
     }
+    
+    if (data.type === "game_over") {
+    gameReady = false;
+    clearInterval(countdownInterval);
+    const myScore = myColor === "black" ? data.blackScore : data.whiteScore;
+    const oppScore = myColor === "black" ? data.whiteScore : data.blackScore;
+    const result = data.winner === myColor ? "You win!" : data.winner === "draw" ? "Draw!" : "You lose!";
+    alert(`Game over! ${result}\nYour score: ${myScore} | Opponent: ${oppScore}`);
+    window.location.href = "lobby.html";
+}
 };
 
 socket.onerror = () => {
@@ -226,16 +244,4 @@ function formatTime(ms) {
     const minutes = Math.floor(total / 60);
     const seconds = total % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
-function removeGroup(x, y, color, board, boardSize = 19) {
-    if (x < 0 || y < 0 || x >= boardSize || y >= boardSize) return;
-    if (board[y][x] !== color) return;
-
-    board[y][x] = null;
-
-    removeGroup(x - 1, y, color, board);
-    removeGroup(x + 1, y, color, board);
-    removeGroup(x, y - 1, color, board);
-    removeGroup(x, y + 1, color, board);
 }

@@ -275,6 +275,8 @@ class Game {
         this.blackCaptured = 0;
         this.whiteCaptured = 0;
 
+        this.lastMoveWasPass = false;
+
         this.current = "black"; //in go black starts btw
     }
     startTimer() {
@@ -350,12 +352,13 @@ class Game {
             if (nx < 0 || ny < 0 || nx >= this.boardSize || ny >= this.boardSize) continue;
             if (this.board[ny][nx] === opponent && canTakeStone(nx, ny, opponent, this.board, this.boardSize)) {
                 removeGroup(nx, ny, opponent, this.board, captured, this.boardSize);
-                if (color === "black") {
-                    this.blackCaptured += captured.length;
-                } else {
-                    this.whiteCaptured += captured.length;
-                }
             }
+        }
+
+        if (color === "black") {
+            this.blackCaptured += captured.length;
+        } else {
+            this.whiteCaptured += captured.length;
         }
         if (canTakeStone(x, y, color, this.board, this.boardSize)) {
             this.board[y][x] = null; // Zug rückgängig machen
@@ -363,6 +366,7 @@ class Game {
         }
         this.consumeTime(color);
         this.current = this.current === "black" ? "white" : "black";
+        this.lastMoveWasPass = false;
         return { ok: true, color, captured };
     }
 }
@@ -518,6 +522,32 @@ wss.on("connection", (ws) => {
                 return;
             }
 
+            const wasAlreadyPassed = game.lastMoveWasPass;
+            game.lastMoveWasPass = true;
+
+            if (wasAlreadyPassed) {
+                // Beide haben gepasst — Spiel endet
+                game.stopTimer();
+                const territory = calculateTerritory(game.board, game.boardSize);
+                const blackScore = territory.blackTerritory + game.blackCaptured;
+                const whiteScore = territory.whiteTerritory + game.whiteCaptured;
+                const winner = blackScore > whiteScore ? "black" : whiteScore > blackScore ? "white" : "draw";
+
+                const endData = JSON.stringify({
+                    type: "game_over",
+                    reason: "both_passed",
+                    blackScore,
+                    whiteScore,
+                    winner
+                });
+
+                if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(endData);
+                if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(endData);
+                games.delete(game.id);
+                broadcastGamesList();
+                return;
+            }
+
             game.consumeTime();
             game.current = game.current === "black" ? "white" : "black";
 
@@ -566,6 +596,8 @@ wss.on("connection", (ws) => {
 
             // Delete the game as soon as one of them is away for 30 seconds
             if (oneDisconnected && !game.deleteTimeout) {
+                game.consumeTime();
+                game.stopTimer();
                 const remaining = game.player1Disconnected ? game.player2 : game.player1;
                 if (remaining?.readyState === WebSocket.OPEN) {
                     remaining.send(JSON.stringify({
