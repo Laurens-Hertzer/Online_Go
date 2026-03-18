@@ -46,12 +46,12 @@ async function initDatabase() {
                     [user.username, hash]
                 );
             }
-            console.log('Test-User erstellt');
+            console.log('Testnutzer erstellt');
         }
 
         console.log('Datenbank initialisiert');
     } catch (err) {
-        console.error('Fehler beim Initialisieren der Datenbank:', err);
+        console.error('Datenbankfehler:', err);
     }
 }
 
@@ -65,21 +65,18 @@ const sessionMiddleware = session({
         createTableIfMissing: true
     }),
     secret: process.env.SESSION_SECRET,
-    resave: false, // don't save session if unmodified
-    saveUninitialized: false, // don't create session until something stored
+    resave: false,
+    saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Auto true in Render
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-Origin
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24h
     },
 });
 
-// CORS-Config, allows communication between Frontend 
-// and Backend when they are on different origins (e.g. Render) 
-// and allows cookies to be sent for authentication. 
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000", //
+    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
     credentials: true
 }));
 
@@ -90,7 +87,7 @@ app.use(sessionMiddleware);
 
 function requireAuth(req, res, next) {
     if (!req.session.userId) {
-        return res.status(401).json({ error: "Not logt in" });
+        return res.status(401).json({ error: "Nicht eingeloggt" });
     }
     next();
 }
@@ -99,35 +96,31 @@ app.post("/register", async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(422).json({ error: "You have to put in all the required inputs." })
+        return res.status(422).json({ error: "Alle Felder müssen ausgefüllt werden." });
     }
-
     if (username.length < 3) {
-        return res.status(422).json({ error: "Username has to be atleast 3 letters." });
+        return res.status(422).json({ error: "Username muss mindestens 3 Zeichen lang sein." });
     }
     if (password.length < 8) {
-        return res.status(422).json({ error: "Passwort too short, has to be atleast 8 characters big." });
+        return res.status(422).json({ error: "Passwort muss mindestens 8 Zeichen lang sein." });
     }
 
     try {
         const existingUser = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
         if (existingUser.rows.length > 0) {
-            return res.status(409).json({ error: "Username already taken" });
+            return res.status(409).json({ error: "Username bereits vergeben." });
         }
 
-
-
         const passwordHash = await bcrypt.hash(password, 10);
-
         await pool.query(
             'INSERT INTO users (username, password_hash) VALUES ($1, $2)',
             [username, passwordHash]
         );
 
-        res.json({ message: "Account sucessfully created" });
+        res.json({ message: "Account erfolgreich erstellt." });
     } catch (err) {
-        console.error('registrationerror:', err);
-        res.status(500).json({ error: "Servererror during registration" });
+        console.error('Registrierungsfehler:', err);
+        res.status(500).json({ error: "Serverfehler bei der Registrierung." });
     }
 });
 
@@ -135,7 +128,7 @@ app.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(422).json({ error: "Not all needed credentials given." })
+        return res.status(422).json({ error: "Benutzername und Passwort erforderlich." });
     }
 
     try {
@@ -145,14 +138,13 @@ app.post("/login", async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(401).json({ error: "Wrong username or password" });
+            return res.status(401).json({ error: "Falscher Benutzername oder Passwort." });
         }
 
         const user = result.rows[0];
-
         const passwordMatch = await bcrypt.compare(password, user.password_hash);
         if (!passwordMatch) {
-            return res.status(401).json({ error: "Wrong username or password" });
+            return res.status(401).json({ error: "Falscher Benutzername oder Passwort." });
         }
 
         req.session.userId = user.id;
@@ -160,15 +152,15 @@ app.post("/login", async (req, res) => {
 
         req.session.save((err) => {
             if (err) {
-                console.error("[Login] Session save failed:", err);
-                return res.status(500).json({ error: "Session error." });
+                console.error("[Login] Session konnte nicht gespeichert werden:", err);
+                return res.status(500).json({ error: "Session-Fehler." });
             }
-            console.log("[Login] Session saved, userId:", req.session.userId);
+            console.log("[Login] Erfolgreich, userId:", req.session.userId);
             res.json({ message: "success", username: user.username });
         });
     } catch (err) {
-        console.error("[Login] Error:", err);
-        res.status(500).json({ error: "Internal server error." });
+        console.error("[Login] Fehler:", err);
+        res.status(500).json({ error: "Interner Serverfehler." });
     }
 });
 
@@ -176,7 +168,7 @@ app.get("/verify", (req, res) => {
     if (req.session.userId) {
         return res.send({ username: req.session.username });
     } else {
-        return res.status(401).json({ error: "You have to log in first." });
+        return res.status(401).json({ error: "Nicht eingeloggt." });
     }
 });
 
@@ -186,9 +178,9 @@ app.delete("/logout", (req, res) => {
     }
     req.session.destroy((err) => {
         if (err) {
-            return res.status(500).json({ error: "Logout failed." });
+            return res.status(500).json({ error: "Logout fehlgeschlagen." });
         }
-        res.json({ message: "Succesful logout" });
+        res.json({ message: "Erfolgreich ausgeloggt." });
     });
 });
 
@@ -208,31 +200,25 @@ app.get("/game.html", requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend", "game.html"));
 });
 
-// All static files (CSS, JS, Pictures)
 app.use(express.static(path.join(__dirname, '../Frontend')));
 
-// Catch-All for SPA (anti404 when reloading) 
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/index.html"));
 });
 
 const server = app.listen(process.env.PORT || 3000, () => {
-    console.log("[Server] Running on port", process.env.PORT || 3000);
+    console.log("[Server] Läuft auf Port", process.env.PORT || 3000);
 });
 
 server.on("upgrade", (req, socket, head) => {
-    // Run the session middleware manually on the upgrade request
-    // so we can read req.session
     sessionMiddleware(req, {}, () => {
         if (!req.session.userId) {
-            console.log("[WS] Rejected unauthenticated connection attempt");
-            socket.destroy(); // close the TCP connection, no WebSocket
+            console.log("[WS] Nicht authentifizierte Verbindung abgelehnt");
+            socket.destroy();
             return;
         }
 
         wss.handleUpgrade(req, socket, head, (ws) => {
-            // Attach user info directly to the ws object
-            // Now we always know who this WebSocket belongs to
             ws.userId = req.session.userId;
             ws.username = req.session.username;
             wss.emit("connection", ws, req);
@@ -242,8 +228,7 @@ server.on("upgrade", (req, socket, head) => {
 
 const wss = new WebSocket.Server({ noServer: true });
 
-// Matchmaking
-const games = new Map(); //Map instead of Array for better id handling.
+const games = new Map();
 let gameIdCounter = 0;
 
 class Game {
@@ -261,7 +246,6 @@ class Game {
         this.deleteTimeout = null;
 
         const ms = (timePerPlayer || 600) * 1000;
-
         this.blackTime = ms;
         this.whiteTime = ms;
 
@@ -271,14 +255,14 @@ class Game {
         this.boardSize = boardSize || 19;
         this.board = Array.from({ length: this.boardSize }, () => Array(this.boardSize).fill(null));
 
-
         this.blackCaptured = 0;
         this.whiteCaptured = 0;
 
         this.lastMoveWasPass = false;
 
-        this.current = "black"; //in go black starts btw
+        this.current = "black";
     }
+
     startTimer() {
         this.turnStartedAt = Date.now();
         this.timerInterval = setInterval(() => {
@@ -333,17 +317,15 @@ class Game {
 
         const color = this.getColor(ws);
         if (color !== this.current) {
-            return { ok: false, reason: "Not your turn." };
+            return { ok: false, reason: "Nicht dein Zug." };
         }
 
         if (this.board[y][x] !== null) {
-            return { ok: false, reason: "Feld besetzt" };
+            return { ok: false, reason: "Feld besetzt." };
         }
 
-        // Stein setzen
         this.board[y][x] = color;
 
-        // Gegnerische Gruppen ohne Freiheiten entfernen
         const opponent = color === "black" ? "white" : "black";
         const neighbors = [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]];
 
@@ -360,11 +342,13 @@ class Game {
         } else {
             this.whiteCaptured += captured.length;
         }
+
         if (canTakeStone(x, y, color, this.board, this.boardSize)) {
-            this.board[y][x] = null; // Zug rückgängig machen
-            return { ok: false, reason: "Suicide move not allowed." };
+            this.board[y][x] = null;
+            return { ok: false, reason: "Selbstmord-Zug nicht erlaubt." };
         }
-        this.consumeTime(color);
+
+        this.consumeTime();
         this.current = this.current === "black" ? "white" : "black";
         this.lastMoveWasPass = false;
         return { ok: true, color, captured };
@@ -373,7 +357,7 @@ class Game {
 
 
 wss.on("connection", (ws) => {
-    console.log("[WS] User connected:", ws.username);
+    console.log("[WS] Verbunden:", ws.username);
     sendGamesList(ws);
 
     ws.on("message", (msg) => {
@@ -381,14 +365,13 @@ wss.on("connection", (ws) => {
         try {
             data = JSON.parse(msg);
         } catch {
-            console.warn("[WS] Invalid JSON from:", ws.username);
+            console.warn("[WS] Ungültiges JSON von:", ws.username);
             return;
         }
 
         if (data.action === "create") {
-            // One game per user at a time
             if (ws.currentGame) {
-                ws.send(JSON.stringify({ type: "error", message: "You are already in a game." }));
+                ws.send(JSON.stringify({ type: "error", message: "Du bist bereits in einem Spiel." }));
                 return;
             }
 
@@ -396,23 +379,23 @@ wss.on("connection", (ws) => {
             games.set(game.id, game);
             ws.currentGame = game;
 
-            console.log("[Game] Created:", game.id, "by", ws.username, "with time:", data.timePerPlayer, "minutes per player");
+            console.log("[Spiel] Erstellt:", game.id, "von", ws.username, "| Zeit:", data.timePerPlayer, "s | Brett:", data.boardSize);
             broadcastGamesList();
         }
 
         if (data.action === "join") {
-            const game = games.get(data.gameId); // lookup by ID, not index
+            const game = games.get(data.gameId);
 
             if (!game) {
-                ws.send(JSON.stringify({ type: "error", message: "Game not found." }));
+                ws.send(JSON.stringify({ type: "error", message: "Spiel nicht gefunden." }));
                 return;
             }
             if (game.player2) {
-                ws.send(JSON.stringify({ type: "error", message: "Game is full." }));
+                ws.send(JSON.stringify({ type: "error", message: "Spiel ist voll." }));
                 return;
             }
             if (game.player1Id === ws.userId) {
-                ws.send(JSON.stringify({ type: "error", message: "You cannot join your own game." }));
+                ws.send(JSON.stringify({ type: "error", message: "Du kannst nicht deinem eigenen Spiel beitreten." }));
                 return;
             }
 
@@ -425,16 +408,15 @@ wss.on("connection", (ws) => {
             game.player1.send(JSON.stringify({ type: "start", color: "black", gameId: game.id, timers, boardSize: game.boardSize }));
             game.player2.send(JSON.stringify({ type: "start", color: "white", gameId: game.id, timers, boardSize: game.boardSize }));
 
-            console.log("[Game] Started:", game.id);
+            console.log("[Spiel] Gestartet:", game.id);
             broadcastGamesList();
         }
-
 
         if (data.type === "move") {
             if (!ws.currentGame) return;
 
             const game = ws.currentGame;
-            if (!game.player2) return; // game hasn't started yet
+            if (!game.player2) return;
 
             const result = game.playMove(data.x, data.y, ws);
 
@@ -463,19 +445,17 @@ wss.on("connection", (ws) => {
             const game = games.get(data.gameId);
 
             if (!game) {
-                ws.send(JSON.stringify({ type: "error", message: "Game no longer available." }));
+                ws.send(JSON.stringify({ type: "error", message: "Spiel nicht mehr verfügbar." }));
                 return;
             }
 
-            // Check this user actually belongs to this game
-            const color = game.getColor(ws); // uses ws.userId
+            const color = game.getColor(ws);
             if (!color) {
-                console.warn("[WS] Unauthorized rejoin attempt by", ws.username, "for game", data.gameId);
-                ws.send(JSON.stringify({ type: "error", message: "You are not part of this game." }));
+                console.warn("[WS] Unbefugter Rejoin von", ws.username, "für Spiel", data.gameId);
+                ws.send(JSON.stringify({ type: "error", message: "Du bist nicht Teil dieses Spiels." }));
                 return;
             }
 
-            // Cancel the delete timeout if it was set
             if (game.deleteTimeout) {
                 clearTimeout(game.deleteTimeout);
                 game.deleteTimeout = null;
@@ -499,12 +479,14 @@ wss.on("connection", (ws) => {
             }
 
             ws.currentGame = game;
-            console.log("[Game] Rejoined:", game.id, "as", color, "by", ws.username);
+            console.log("[Spiel] Rejoined:", game.id, "als", color, "von", ws.username);
             ws.send(JSON.stringify({
                 type: "rejoin_success",
                 color,
                 timers: game.getTimers(),
                 currentTurn: game.current,
+                board: game.board,
+                boardSize: game.boardSize,
                 territory: {
                     ...calculateTerritory(game.board, game.boardSize),
                     blackCaptured: game.blackCaptured,
@@ -512,6 +494,7 @@ wss.on("connection", (ws) => {
                 }
             }));
         }
+
         if (data.type === "pass") {
             if (!ws.currentGame) return;
             const game = ws.currentGame;
@@ -519,7 +502,7 @@ wss.on("connection", (ws) => {
 
             const color = game.getColor(ws);
             if (color !== game.current) {
-                ws.send(JSON.stringify({ type: "error", message: "Not your turn." }));
+                ws.send(JSON.stringify({ type: "error", message: "Nicht dein Zug." }));
                 return;
             }
 
@@ -527,7 +510,6 @@ wss.on("connection", (ws) => {
             game.lastMoveWasPass = true;
 
             if (wasAlreadyPassed) {
-                // Beide haben gepasst — Spiel endet
                 game.stopTimer();
                 const territory = calculateTerritory(game.board, game.boardSize);
                 const blackScore = territory.blackTerritory + game.blackCaptured;
@@ -545,10 +527,11 @@ wss.on("connection", (ws) => {
                 if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(endData);
                 if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(endData);
 
-                game.player1.currentGame = null;
-                game.player2.currentGame = null;
+                if (game.player1) game.player1.currentGame = null;
+                if (game.player2) game.player2.currentGame = null;
                 games.delete(game.id);
                 broadcastGamesList();
+                return; // ← wichtig
             }
 
             game.consumeTime();
@@ -577,15 +560,15 @@ wss.on("connection", (ws) => {
             if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(resignData);
             if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(resignData);
 
-            game.player1.currentGame = null;
-            game.player2.currentGame = null;
+            if (game.player1) game.player1.currentGame = null;
+            if (game.player2) game.player2.currentGame = null;
             games.delete(game.id);
             broadcastGamesList();
         }
     });
 
     ws.on("close", () => {
-        console.log("[WS] User disconnected:", ws.username);
+        console.log("[WS] Getrennt:", ws.username);
 
         games.forEach((game, id) => {
             if (game.player1 === ws) {
@@ -599,15 +582,15 @@ wss.on("connection", (ws) => {
 
             const oneDisconnected = game.player1Disconnected || game.player2Disconnected;
 
-            // Delete the game as soon as one of them is away for 30 seconds
             if (oneDisconnected && !game.deleteTimeout) {
                 game.consumeTime();
                 game.stopTimer();
+
                 const remaining = game.player1Disconnected ? game.player2 : game.player1;
                 if (remaining?.readyState === WebSocket.OPEN) {
                     remaining.send(JSON.stringify({
                         type: "opponent_left",
-                        message: "Your opponent disconnected. They have 30 seconds to reconnect."
+                        message: "Dein Gegner hat die Verbindung getrennt. 30 Sekunden zum Wiederverbinden."
                     }));
                 }
 
@@ -616,13 +599,13 @@ wss.on("connection", (ws) => {
                     if (winner?.readyState === WebSocket.OPEN) {
                         winner.send(JSON.stringify({
                             type: "win_by_disconnect",
-                            message: "Your opponent didn't reconnect. You win!"
+                            message: "Dein Gegner hat sich nicht wiederverbunden. Du gewinnst!"
                         }));
                     }
                     games.delete(id);
-                    console.log("[Game] Deleted after timeout:", id);
+                    console.log("[Spiel] Gelöscht nach Timeout:", id);
                     broadcastGamesList();
-                }, 30000); // 30 seconds waiting period
+                }, 30000);
             }
         });
 
@@ -636,9 +619,9 @@ function getGamesListPayload() {
     const list = [];
     games.forEach((game, id) => {
         list.push({
-            gameId: id, // send ID not index, frontend uses this for join
-            player1: game.player1Id ? game.player1?.username || "Reconnecting..." : null,
-            player2: game.player2Id ? game.player2?.username || "Reconnecting..." : null,
+            gameId: id,
+            player1: game.player1Id ? game.player1?.username || "Wiederverbinden..." : null,
+            player2: game.player2Id ? game.player2?.username || "Wiederverbinden..." : null,
         });
     });
     return list;
@@ -655,7 +638,7 @@ function broadcastGamesList() {
             client.send(message);
         }
     });
-    console.log("[WS] Games list broadcast:", games.size, "games");
+    console.log("[WS] Spiele broadcast:", games.size, "Spiele");
 }
 
 function canTakeStone(x, y, color, board, boardSize = 19) {
@@ -708,9 +691,8 @@ function calculateTerritory(board, boardSize = 19) {
             const key = `${x},${y}`;
             if (visited.has(key)) continue;
 
-            // Flood fill von diesem leeren Feld aus
             const region = [];
-            const borders = new Set(); // welche Farben grenzen an
+            const borders = new Set();
             const queue = [[x, y]];
 
             while (queue.length > 0) {
@@ -719,30 +701,24 @@ function calculateTerritory(board, boardSize = 19) {
                 if (visited.has(k)) continue;
 
                 if (board[cy][cx] !== null) {
-                    // Stein — als Grenze merken aber NICHT zu visited hinzufügen
-                    // damit er für andere Regionen wieder als Grenze erkannt wird
                     borders.add(board[cy][cx]);
                     continue;
                 }
 
-                visited.add(k); // ← nur leere Felder zu visited hinzufügen
-
+                visited.add(k);
                 region.push([cx, cy]);
 
-                // NEU
                 for (const [nx, ny] of [[cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]]) {
                     if (nx < 0 || ny < 0 || nx >= boardSize || ny >= boardSize) continue;
                     if (!visited.has(`${nx},${ny}`)) queue.push([nx, ny]);
                 }
             }
 
-            // Gebiet zuordnen
             if (borders.size === 1) {
                 const owner = [...borders][0];
                 if (owner === "black") blackTerritory += region.length;
                 if (owner === "white") whiteTerritory += region.length;
             }
-            // borders.size === 2 → neutral, niemand bekommt Punkte
         }
     }
 

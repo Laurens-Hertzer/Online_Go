@@ -35,8 +35,8 @@ socket.onopen = () => {
     if (!gameId || !myColor) {
         // Should not happen if the user arrived here via lobby.html normally.
         // Could happen if someone navigates to game.html directly.
-        console.error("[Game] No gameId or color in sessionStorage");
-        alert("No game found. Returning to lobby.");
+        console.error("[Game] Keine gameId der Farbe im SessionStorage");
+        alert("Kein Spiel gefunden, zurück zur Lobby.");
         window.location.href = "lobby.html";
         return;
     }
@@ -46,7 +46,6 @@ socket.onopen = () => {
     // We send myColor as a hint but the server does NOT trust it for auth —
     // it uses userId to determine the real color.
     socket.send(JSON.stringify({ type: "rejoin", gameId, color: myColor }));
-    console.log("[Game] Rejoining:", gameId, "as", myColor);
 };
 
 socket.onmessage = (msg) => {
@@ -93,7 +92,6 @@ socket.onmessage = (msg) => {
         console.error("[Server error]", data.message);
     }
     if (data.type === "opponent_left") {
-        console.log("[Game] Opponent disconnected");
         // Nur informieren, nicht sofort weiterleiten
         document.getElementById("status").textContent = "Opponent disconnected. Waiting 30s...";
     }
@@ -137,17 +135,16 @@ socket.onmessage = (msg) => {
 };
 
 socket.onerror = () => {
-    console.error("[WS] Connection error");
+    console.error("[WS] Verbindungsfehler");
 };
 
 socket.onclose = () => {
-    console.log("[WS] Connection closed");
+    console.log("[WS] Verbindung getrennt");
     gameReady = false;
 };
 
 svg.addEventListener("click", (e) => {
     if (!gameReady) {
-        console.log("[Game] Not ready yet");
         return;
     }
 
@@ -255,7 +252,7 @@ function formatTime(ms) {
 function rebuildBoard(board, size) {
     // Alle bestehenden Steine entfernen
     svg.querySelectorAll("circle").forEach(el => el.remove());
-    
+
     // Brett neu zeichnen
     for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {

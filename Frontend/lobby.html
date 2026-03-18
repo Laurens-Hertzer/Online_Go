@@ -14,7 +14,7 @@
     <h1>Lobby</h1>
     <div id="status-bar">
         <span id="logged-in-as"></span>
-        <button id="rules-btn">?</button>
+        <button id="rules-btn">Regeln</button>
         <button id="logout-btn">Logout</button>
     </div>
 
@@ -26,40 +26,36 @@
                 style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#c8a96e; font-size:1.2rem; cursor:pointer;">✕</button>
             <h3 style="color:#c8a96e; font-family:'Noto Serif',serif; margin-bottom:1rem;">Rules of Go</h3>
             <div style="color:#e8e0d0; font-size:0.85rem; line-height:1.8;">
-                <p><strong style="color:#c8a96e;">Goal:</strong> Control more territory than your opponent.</p><br>
-                <p><strong style="color:#c8a96e;">Placing stones:</strong> Players alternate placing stones on
-                    intersections. Black goes first.</p><br>
-                <p><strong style="color:#c8a96e;">Capturing:</strong> Surround an opponent's stone or group (remove all
-                    liberties) to capture it.</p><br>
-                <p><strong style="color:#c8a96e;">Liberties:</strong> Empty adjacent intersections (up, down, left,
-                    right) of a stone or group.</p><br>
-                <p><strong style="color:#c8a96e;">Suicide:</strong> You cannot place a stone that would have no
-                    liberties, unless it captures opponent stones.</p><br>
-                <p><strong style="color:#c8a96e;">Passing:</strong> You may pass your turn. If both players pass
-                    consecutively, the game ends.</p><br>
-                <p><strong style="color:#c8a96e;">Scoring:</strong> Territory (empty points you surround) + captured
-                    stones = your score.</p>
+                <p><strong style="color:#c8a96e;">Ziel:</strong> Kontrolliere mehr Gebiet als dein Gegner. Ein eingenommenes Gebiet ist es, falls das Gebiet/ der/die Stein/e dort keine Freiheiten haben. Das Ziel ist es NICHT, so viele von seinen eigenen Steinen auf dem Brett zu haben, dies könnte tatsächlich auch deiner Punktzahl schädigen!</p><br>
+                <p><strong style="color:#c8a96e;">Steine legen:</strong>Steine werden immer auf den Punkten gelegt, wo sich zwei Seiten schneiden, nicht auf dem Feld wie in Schach. In Go beginnt schwarz.</p><br>
+                <p><strong style="color:#c8a96e;">Steine schlagen:</strong> Umkreise den Stein oder Gruppe von Steinen deines Gegners.</p><br>
+                <p><strong style="color:#c8a96e;">Liberties, Freiheiten:</strong>Ein Stein braucht um Freiheiten zu haben. Ein Stein hat keine Freiheiten falls es von oben, unten, links und rechts eingeschlossen ist (nicht diagonal).</p><br>
+                <p><strong style="color:#c8a96e;">Suicide:</strong> Du kannst keinen Stein legen, der wenn gelegt keine Freiheiten hätte und direkt geschlagen werden könnte.</p><br>
+                <p><strong style="color:#c8a96e;">Passen:</strong> Im Gegensatz zu Schach darf man in Go auf Züge verzichten. Dies nennt man passen. Falls die Spieler beide passen wird das Spiel enden und die Punkte werden ausgezählt.</p><br>
+                <p><strong style="color:#c8a96e;">Scoring:</strong> Dein Territorium (kann kleiner aber auch wieder kleiner während dem Spiel werden) + geschlagenne Stein. Ein Feld oder ein geschlagener Stein = ein Punkt</p>
             </div>
         </div>
     </div>
     <ul id="game-list">
-        <li>Loading games...</li>
+        <li>Spiele laden...</li>
     </ul>
-    <button id="create-game-btn">Create New Game</button>
+    <button id="create-game-btn">Neues Spiel erstellen</button>
 
     <div id="timer-modal"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
-        <div style="background:white; padding:2rem; border-radius:8px;">
+        <div style="background:white; padding:2rem; border-radius:8px; position:relative;">
+            <button id="timer-close"
+                style="position:absolute; top:0.5rem; right:0.75rem; background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
             <h3>Time per player (minutes)</h3>
             <input type="number" id="timer-input" value="10" min="1" max="120">
             <br><br>
             <h3>Board size</h3>
             <select id="board-size-input">
-                <option value="9">9×9 (Beginner)</option>
-                <option value="13">13×13 (Intermediate)</option>
-                <option value="19" selected>19×19 (Full)</option>
+                <option value="9">9×9 (Anfänger)</option>
+                <option value="13">13×13 (Mittel)</option>
+                <option value="19" selected>19×19 (Vollständig)</option>
             </select>
-            <h3>Time per player (minutes)</h3>
+            <h3>Zeit je Spieler (Minuten)</h3>
             <button id="timer-confirm">Start</button>
         </div>
     </div>

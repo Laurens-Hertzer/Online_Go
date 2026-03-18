@@ -49,7 +49,7 @@ function connectWebSocket() {
     socket = new WebSocket(`${protocol}//${location.host}`);
 
     socket.onopen = () => {
-        console.log('WebSocket connected');
+        console.log("[WS] Verbindung hergestellt");
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -72,18 +72,17 @@ function connectWebSocket() {
     };
 
     socket.onerror = () => {
-        console.error('WebSocket Error 😩');
+        console.error("[WS] Verbindungsfehler");
     };
 
     socket.onclose = () => {
-        console.log('WebSocket closed');
-
+        console.log("[WS] Verbindung getrennt");
     };
 }
 
 function renderGameList(games) {
     if (games.length === 0) {
-        gameList.innerHTML = "<li>No games yet. Create one!</li>";
+        gameList.innerHTML = "<li>Keine Spiele, erstelle eins!</li>";
         return;
     }
 
@@ -91,10 +90,10 @@ function renderGameList(games) {
         .map(
             (game, index) => `
         <li>
-            <span>Game ${index + 1}: ${game.player1 || "Waiting..."} ${game.player2 ? "vs " + game.player2 : ""}</span>
+            <span>Game ${index + 1}: ${game.player1 || "Warte..."} ${game.player2 ? "vs " + game.player2 : ""}</span>
             ${!game.player2
-                    ? `<button onclick="joinGame('${game.gameId}')">Join</button>`
-                    : "<span>Full</span>"
+                    ? `<button onclick="joinGame('${game.gameId}')">Beitreten</button>`
+                    : "<span>Voll</span>"
                 }
         </li>
     `
@@ -105,7 +104,6 @@ function renderGameList(games) {
 function joinGame(gameId) {
     if (socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ action: "join", gameId }));
-        console.log("[Game] Joining game:", gameId);
     }
 }
 
