@@ -92,12 +92,20 @@ socket.onmessage = (msg) => {
         console.error("[Server error]", data.message);
     }
     if (data.type === "opponent_left") {
-        // Nur informieren, nicht sofort weiterleiten
-        document.getElementById("status").textContent = "Gegner getrennt. Warte 30s...";
+        clearInterval(countdownInterval); 
+        let seconds = 30;
+        document.getElementById("status").textContent = `Gegner getrennt. Noch ${seconds}s...`;
+        const disconnectInterval = setInterval(() => {
+            seconds--;
+            document.getElementById("status").textContent = `Gegner getrennt. Noch ${seconds}s...`;
+            if (seconds <= 0) clearInterval(disconnectInterval);
+        }, 1000);
     }
 
     if (data.type === "opponent_returned") {
-        document.getElementById("status").textContent = currentTurn === myColor ? "Dein Zug" : "Zug des Gegners";
+        document.getElementById("status").textContent = "Gegner hat sich wiederverbunden!";
+        startLocalCountdown();
+        setTimeout(updateStatus, 3000);
     }
     if (data.type === "passed") {
         if (data.timers) localTimers = data.timers;

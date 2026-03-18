@@ -12,6 +12,30 @@ window.addEventListener('DOMContentLoaded', () => {
     gameList = document.getElementById("game-list");
     createGameBtn = document.getElementById("create-game-btn");
     logoutBtn = document.getElementById("logout-btn");
+    const savedGameId = sessionStorage.getItem("gameId");
+    const savedColor = sessionStorage.getItem("myColor");
+
+    if (savedGameId && savedColor) {
+        const rejoinBanner = document.createElement("div");
+        rejoinBanner.innerHTML = `
+        <span>Du hast ein laufendes Spiel.</span>
+        <button id="rejoin-btn">Weiterspielen</button>
+        <button id="abandon-btn">Aufgeben</button>
+    `;
+        rejoinBanner.id = "rejoin-banner";
+        document.body.insertBefore(rejoinBanner, document.body.firstChild);
+
+        document.getElementById("rejoin-btn").addEventListener("click", () => {
+            window.location.href = "game.html";
+        });
+
+        document.getElementById("abandon-btn").addEventListener("click", () => {
+            sessionStorage.removeItem("gameId");
+            sessionStorage.removeItem("myColor");
+            sessionStorage.removeItem("boardSize");
+            rejoinBanner.remove();
+        });
+    }
 
     createGameBtn.addEventListener("click", () => {
         showTimerModal((seconds, boardSize) => {

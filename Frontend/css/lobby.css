@@ -182,3 +182,39 @@ h1 {
 #rules-btn:hover {
   border-color: var(--gold);
 }
+#rejoin-banner {
+    background: var(--surface);
+    border: 1px solid var(--gold-dim);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    max-width: 480px;
+}
+
+#rejoin-btn {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Noto Serif', serif;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+#rejoin-btn:hover { background: var(--gold); color: var(--bg); }
+
+#abandon-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+#abandon-btn:hover { border-color: var(--red); color: var(--red); }
