@@ -2,6 +2,11 @@ let socket;
 let gameList;
 let createGameBtn;
 let logoutBtn;
+let myUsername = null;
+
+fetch("/verify", { credentials: "include" })
+    .then(res => res.json())
+    .then(data => { myUsername = data.username; });
 
 window.addEventListener('DOMContentLoaded', () => {
     gameList = document.getElementById("game-list");
@@ -89,14 +94,14 @@ function renderGameList(games) {
     gameList.innerHTML = games
         .map(
             (game, index) => `
-        <li>
-            <span>Game ${index + 1}: ${game.player1 || "Warte..."} ${game.player2 ? "vs " + game.player2 : ""}</span>
-            ${!game.player2
+    <li>
+        <span>Spiel ${index + 1}: ${game.player1 || "Warte..."} ${game.player2 ? "vs " + game.player2 : ""}</span>
+        ${!game.player2 && game.player1 !== myUsername
                     ? `<button onclick="joinGame('${game.gameId}')">Beitreten</button>`
-                    : "<span>Voll</span>"
+                    : game.player2 ? "<span>Voll</span>" : "<span>Dein Spiel</span>"
                 }
-        </li>
-    `
+            </li>
+        `
         )
         .join("");
 }
