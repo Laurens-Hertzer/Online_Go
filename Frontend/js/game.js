@@ -93,18 +93,18 @@ socket.onmessage = (msg) => {
     }
     if (data.type === "opponent_left") {
         // Nur informieren, nicht sofort weiterleiten
-        document.getElementById("status").textContent = "Opponent disconnected. Waiting 30s...";
+        document.getElementById("status").textContent = "Gegner getrennt. Warte 30s...";
     }
 
     if (data.type === "opponent_returned") {
-        document.getElementById("status").textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
+        document.getElementById("status").textContent = currentTurn === myColor ? "Dein Zug" : "Zug des Gegners";
     }
     if (data.type === "passed") {
         if (data.timers) localTimers = data.timers;
         currentTurn = currentTurn === "black" ? "white" : "black";
         updateStatus();
         // Status kurz anzeigen wer gepasst hat
-        document.getElementById("status").textContent = `${data.color} passed`;
+        document.getElementById("status").textContent = `${data.color} hat gepasst`;
         setTimeout(updateStatus, 2000);
     }
 
@@ -112,14 +112,14 @@ socket.onmessage = (msg) => {
         gameReady = false;
         clearInterval(countdownInterval);
         const iWon = data.winner === myColor;
-        alert(iWon ? "Your opponent resigned. You win!" : "You resigned. Your opponent wins.");
+        alert(iWon ? "Dein Gegner hat aufgegeben, du gewinntst!" : "Du hast aufgegeben, du verlierst!");
         window.location.href = "lobby.html";
     }
 
     if (data.type === "win_by_disconnect") {
         gameReady = false;
         clearInterval(countdownInterval);
-        alert("You win! Your opponent didn't reconnect.");
+        alert("Du gewinnst, dein Gegner hat sich nicht wiederverbunden.");
         window.location.href = "lobby.html";
     }
 
@@ -128,8 +128,8 @@ socket.onmessage = (msg) => {
         clearInterval(countdownInterval);
         const myScore = myColor === "black" ? data.blackScore : data.whiteScore;
         const oppScore = myColor === "black" ? data.whiteScore : data.blackScore;
-        const result = data.winner === myColor ? "You win!" : data.winner === "draw" ? "Draw!" : "You lose!";
-        alert(`Game over! ${result}\nYour score: ${myScore} | Opponent: ${oppScore}`);
+        const result = data.winner === myColor ? "Du gewinnst!" : data.winner === "draw" ? "Unentschieden!" : "Du hast verloren!";
+        alert(`Game over! ${result}\nDeine Punktzahl: ${myScore} | Gegner: ${oppScore}`);
         window.location.href = "lobby.html";
     }
 };
@@ -170,7 +170,7 @@ document.getElementById("pass-btn").addEventListener("click", () => {
 
 document.getElementById("resign-btn").addEventListener("click", () => {
     if (!gameReady) return;
-    if (confirm("Are you sure you want to resign?")) {
+    if (confirm("Bist du sicher, dass du aufgeben möchtest?")) {
         socket.send(JSON.stringify({ type: "resign" }));
     }
 });
@@ -214,31 +214,31 @@ function updateStatus() {
 
     if (!statusEl) return;
 
-    if (!gameReady) { statusEl.textContent = "Connecting..."; return; }
+    if (!gameReady) { statusEl.textContent = "Verbinde..."; return; }
 
-    statusEl.textContent = currentTurn === myColor ? "Your turn" : "Opponent's turn";
+    statusEl.textContent = currentTurn === myColor ? "Dein Zug" : "Zug des Gegners";
 
     const opponentColor = myColor === "black" ? "white" : "black";
 
     if (timeEl) {
         const myTime = myColor === "black" ? localTimers.black : localTimers.white;
-        timeEl.textContent = `You: ${formatTime(myTime)}`;
+        timeEl.textContent = `Du: ${formatTime(myTime)}`;
     }
     if (timeOpponentEl) {
         const oppTime = opponentColor === "black" ? localTimers.black : localTimers.white;
-        timeOpponentEl.textContent = `Opponent: ${formatTime(oppTime)}`;
+        timeOpponentEl.textContent = `Gegner: ${formatTime(oppTime)}`;
     }
     if (territoryEl) {
         const myTerritory = myColor === "black"
             ? localTerritory.blackTerritory + localTerritory.blackCaptured
             : localTerritory.whiteTerritory + localTerritory.whiteCaptured;
-        territoryEl.textContent = `Your territory: ${myTerritory}`;
+        territoryEl.textContent = `Dein Gebiet: ${myTerritory}`;
     }
     if (territoryOpponentEl) {
         const oppTerritory = myColor === "black"
             ? localTerritory.whiteTerritory + localTerritory.whiteCaptured
             : localTerritory.blackTerritory + localTerritory.blackCaptured;
-        territoryOpponentEl.textContent = `Opponent's territory: ${oppTerritory}`;
+        territoryOpponentEl.textContent = `Gebiet des Gegners: ${oppTerritory}`;
     }
 }
 

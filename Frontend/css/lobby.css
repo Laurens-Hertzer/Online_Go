@@ -169,15 +169,14 @@ h1 {
 }
 
 #rules-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--gold);
-  font-family: 'Noto Serif', serif;
-  font-size: 0.85rem;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  transition: all 0.2s;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gold);
+    font-family: 'Noto Serif', serif;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 #rules-btn:hover {
