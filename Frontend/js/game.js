@@ -119,14 +119,16 @@ socket.onmessage = (msg) => {
     if (data.type === "resigned") {
         gameReady = false;
         clearInterval(countdownInterval);
+        clearGameSession();
         const iWon = data.winner === myColor;
         alert(iWon ? "Dein Gegner hat aufgegeben, du gewinntst!" : "Du hast aufgegeben, du verlierst!");
-        window.location.href = "lobby.html";
+        setTimeout(() => window.location.href = "lobby.html", 100);
     }
 
     if (data.type === "win_by_disconnect") {
         gameReady = false;
         clearInterval(countdownInterval);
+        clearGameSession();
         alert("Du gewinnst, dein Gegner hat sich nicht wiederverbunden.");
         window.location.href = "lobby.html";
     }
@@ -134,6 +136,7 @@ socket.onmessage = (msg) => {
     if (data.type === "game_over") {
         gameReady = false;
         clearInterval(countdownInterval);
+        clearGameSession();
         const myScore = myColor === "black" ? data.blackScore : data.whiteScore;
         const oppScore = myColor === "black" ? data.whiteScore : data.blackScore;
         const result = data.winner === myColor ? "Du gewinnst!" : data.winner === "draw" ? "Unentschieden!" : "Du hast verloren!";
@@ -269,4 +272,9 @@ function rebuildBoard(board, size) {
             }
         }
     }
+}
+function clearGameSession() {
+    sessionStorage.removeItem("gameId");
+    sessionStorage.removeItem("myColor");
+    sessionStorage.removeItem("boardSize");
 }
