@@ -26,6 +26,12 @@ for (let i = 0; i < boardSize; i++) {
     svg.appendChild(v);
 }
 
+window.addEventListener("beforeunload", (e) => {
+    if (gameReady) {
+        socket.send(JSON.stringify({ type: "resign" }));
+    }
+});
+
 svg.setAttribute("viewBox", `-1 -1 ${boardSize + 1} ${boardSize + 1}`);
 
 const protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -184,6 +190,17 @@ document.getElementById("resign-btn").addEventListener("click", () => {
     if (!gameReady) return;
     if (confirm("Bist du sicher, dass du aufgeben möchtest?")) {
         socket.send(JSON.stringify({ type: "resign" }));
+    }
+});
+
+document.getElementById("leave-btn").addEventListener("click", () => {
+    if (gameReady) {
+        if (confirm("Das Spiel läuft noch. Aufgeben und zur Lobby?")) {
+            socket.send(JSON.stringify({ type: "resign" }));
+        }
+    } else {
+        clearGameSession();
+        window.location.href = "lobby.html";
     }
 });
 
