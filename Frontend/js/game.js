@@ -85,6 +85,7 @@ socket.onmessage = (msg) => {
     if (data.type === "timeout") {
         gameReady = false;
         clearInterval(countdownInterval);
+        clearGameSession();
         alert(`Time's up! ${data.winner} wins!`);
         window.location.href = "lobby.html";
     }
