@@ -184,6 +184,32 @@ app.delete("/logout", (req, res) => {
     });
 });
 
+app.delete("/game/:gameId/resign", requireAuth, async (req, res) => {
+    const game = games.get(req.params.gameId);
+    if (!game) return res.sendStatus(404);
+    
+    const color = req.session.userId === game.player1Id ? "black" : 
+                  req.session.userId === game.player2Id ? "white" : null;
+    if (!color) return res.sendStatus(403);
+
+    game.stopTimer();
+    const winner = color === "black" ? "white" : "black";
+    const resignData = JSON.stringify({ type: "resigned", loser: color, winner });
+    
+    if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(resignData);
+    if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(resignData);
+    
+    if (game.player1) game.player1.currentGame = null;
+    if (game.player2) game.player2.currentGame = null;
+    
+    setTimeout(() => {
+        games.delete(game.id);
+        broadcastGamesList();
+    }, 500);
+    
+    res.sendStatus(200);
+});
+
 app.get('/', (req, res) => {
     if (!req.session.userId) {
         res.sendFile(path.join(__dirname, '../Frontend', 'index.html'));
@@ -549,7 +575,6 @@ wss.on("connection", (ws) => {
         if (data.type === "resign") {
             if (!ws.currentGame) return;
             const game = ws.currentGame;
-            if (!game.player2) return;
 
             const color = game.getColor(ws);
             const winner = color === "black" ? "white" : "black";
@@ -562,8 +587,11 @@ wss.on("connection", (ws) => {
 
             if (game.player1) game.player1.currentGame = null;
             if (game.player2) game.player2.currentGame = null;
-            games.delete(game.id);
-            broadcastGamesList();
+
+            setTimeout(() => {
+                games.delete(game.id);
+                broadcastGamesList();
+            }, 500);
         }
     });
 

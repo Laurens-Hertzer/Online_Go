@@ -26,12 +26,6 @@ for (let i = 0; i < boardSize; i++) {
     svg.appendChild(v);
 }
 
-window.addEventListener("beforeunload", (e) => {
-    if (gameReady) {
-        socket.send(JSON.stringify({ type: "resign" }));
-    }
-});
-
 svg.setAttribute("viewBox", `-1 -1 ${boardSize + 1} ${boardSize + 1}`);
 
 const protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -174,13 +168,11 @@ svg.addEventListener("click", (e) => {
     const x = Math.round(svgP.x);
     const y = Math.round(svgP.y);
 
-    // Basic client-side bounds check — server validates again anyway
     if (x < 0 || x > boardSize - 1 || y < 0 || y > boardSize - 1) return;
 
     socket.send(JSON.stringify({ type: "move", x, y }));
 });
 
-// Nach den anderen Event Listenern
 document.getElementById("pass-btn").addEventListener("click", () => {
     if (!gameReady) return;
     socket.send(JSON.stringify({ type: "pass" }));
@@ -189,6 +181,7 @@ document.getElementById("pass-btn").addEventListener("click", () => {
 document.getElementById("resign-btn").addEventListener("click", () => {
     if (!gameReady) return;
     if (confirm("Bist du sicher, dass du aufgeben möchtest?")) {
+        gameReady = false; 
         socket.send(JSON.stringify({ type: "resign" }));
     }
 });
@@ -196,6 +189,7 @@ document.getElementById("resign-btn").addEventListener("click", () => {
 document.getElementById("leave-btn").addEventListener("click", () => {
     if (gameReady) {
         if (confirm("Das Spiel läuft noch. Aufgeben und zur Lobby?")) {
+            gameReady = false;
             socket.send(JSON.stringify({ type: "resign" }));
         }
     } else {

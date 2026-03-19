@@ -30,29 +30,15 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById("abandon-btn").addEventListener("click", () => {
-            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const tempSocket = new WebSocket(`${protocol}//${location.host}`);
-
-            tempSocket.onopen = () => {
-                tempSocket.send(JSON.stringify({
-                    type: "rejoin",
-                    gameId: savedGameId,
-                    color: savedColor
-                }));
-            };
-
-            tempSocket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === "rejoin_success") {
-                    tempSocket.send(JSON.stringify({ type: "resign" }));
-                    tempSocket.close();
-                }
-            };
-
-            sessionStorage.removeItem("gameId");
-            sessionStorage.removeItem("myColor");
-            sessionStorage.removeItem("boardSize");
-            rejoinBanner.remove();
+            fetch(`/game/${savedGameId}/resign`, {
+                method: "DELETE",
+                credentials: "include"
+            }).finally(() => {
+                sessionStorage.removeItem("gameId");
+                sessionStorage.removeItem("myColor");
+                sessionStorage.removeItem("boardSize");
+                rejoinBanner.remove();
+            });
         });
     }
 
