@@ -9,6 +9,7 @@ let gameReady = false;
 let localTimers = { black: 0, white: 0 };
 let countdownInterval = null;
 let localTerritory = { blackTerritory: 0, whiteTerritory: 0 };
+let disconnectInterval = null;
 
 for (let i = 0; i < boardSize; i++) {
     const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -92,11 +93,12 @@ socket.onmessage = (msg) => {
     if (data.type === "error") {
         console.error("[Server error]", data.message);
     }
+    
     if (data.type === "opponent_left") {
-        clearInterval(countdownInterval); 
+        clearInterval(countdownInterval);
         let seconds = 30;
         document.getElementById("status").textContent = `Gegner getrennt. Noch ${seconds}s...`;
-        const disconnectInterval = setInterval(() => {
+        disconnectInterval = setInterval(() => { // ← kein const
             seconds--;
             document.getElementById("status").textContent = `Gegner getrennt. Noch ${seconds}s...`;
             if (seconds <= 0) clearInterval(disconnectInterval);
@@ -104,6 +106,8 @@ socket.onmessage = (msg) => {
     }
 
     if (data.type === "opponent_returned") {
+        clearInterval(disconnectInterval); // ← Countdown stoppen
+        disconnectInterval = null;
         document.getElementById("status").textContent = "Gegner hat sich wiederverbunden!";
         startLocalCountdown();
         setTimeout(updateStatus, 3000);
@@ -181,7 +185,7 @@ document.getElementById("pass-btn").addEventListener("click", () => {
 document.getElementById("resign-btn").addEventListener("click", () => {
     if (!gameReady) return;
     if (confirm("Bist du sicher, dass du aufgeben möchtest?")) {
-        gameReady = false; 
+        gameReady = false;
         socket.send(JSON.stringify({ type: "resign" }));
     }
 });
