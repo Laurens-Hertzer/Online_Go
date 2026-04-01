@@ -2,6 +2,12 @@
 
 This is a online server with a frontend, for the game Go to play, learn and socialize together.
 
+## Website
+
+This is the link to the website.
+https://gowebsite-vjz8.onrender.com/
+**Attention**, this website is deployed on a free plan, the first startup of the website might take +50 seconds.
+
 ## Tech Stack
 
 **Client**
@@ -12,6 +18,9 @@ This is a online server with a frontend, for the game Go to play, learn and soci
 **Server**
 ![Node](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white)
+
+**Deployment**
+![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=flat&logo=render&logoColor=white)
 
 ## Lessons Learned
 
