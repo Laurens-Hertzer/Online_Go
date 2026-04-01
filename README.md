@@ -45,7 +45,3 @@ Far future, only if the project goes well.
 
 or
 - Host the website over a paid plan of a yet undetermined provider.
-
-## Authors
-
-- [@Laurens Alexander Hertzer](https://www.github.com/Laurens-Hertzer)
