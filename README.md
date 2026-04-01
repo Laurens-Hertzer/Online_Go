@@ -4,8 +4,10 @@ This is a online server with a frontend, for the game Go to play, learn and soci
 
 ## Website
 
-This is the link to the website.
+This is the link to the website:
+
 https://gowebsite-vjz8.onrender.com/
+
 **Attention**, this website is deployed on a free plan, the first startup of the website might take +50 seconds.
 
 ## Tech Stack
