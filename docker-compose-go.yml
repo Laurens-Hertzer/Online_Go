@@ -1,22 +1,22 @@
 services:
     go_backend:
-    build: 
-        context: https://github.com/Laurens-Hertzer/Online_Go.git#main
-        dockerfile: Dockerfile
-    container_name: online_go_app
-    environment:
-        - DATABASE_URL=${DATABASE_URL}
-        - SESSION_SECRET=${SESSION_SECRET}
-        - NODE_ENV=${NODE_ENV}
-        - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
-        - DB_SSL=${DB_SSL}
-    networks:
-        - caddy_net
-        - internal_net_go
-    depends_on:
-        postgres:
-        condition: service_healthy
-    restart: always
+        build: 
+            context: https://github.com/Laurens-Hertzer/Online_Go.git#main
+            dockerfile: Dockerfile
+        container_name: online_go_app
+        environment:
+            - DATABASE_URL=${DATABASE_URL}
+            - SESSION_SECRET=${SESSION_SECRET}
+            - NODE_ENV=${NODE_ENV}
+            - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+            - DB_SSL=${DB_SSL}
+        networks:
+            - caddy_net
+            - internal_net_go
+        depends_on:
+            postgres:
+                condition: service_healthy
+        restart: always
 
     postgres:
         image: postgres:16-alpine
@@ -40,7 +40,7 @@ services:
         image: adminer
         restart: always
         ports:
-        - 8080:8080
+            - 8080:8080
 
 volumes:
     postgres_data:

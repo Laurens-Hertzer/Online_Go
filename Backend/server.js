@@ -11,8 +11,14 @@ const bcrypt = require("bcrypt");
 
 //Definitions
 const app = express();
-//Proxy-Config for Render
-app.set("trust proxy", 1);
+
+//Save start
+if (!process.env.SESSION_SECRET) {
+    console.error("[CRITICAL ERROR] SESSION_SECRET ist nicht in der .env definiert!");
+    process.exit(1);
+}
+//Proxy-Config for Docker (once Render)
+app.set("trust proxy", true);
 
 //DB
 const pool = new Pool({
@@ -30,9 +36,7 @@ async function initDatabase() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-
-        const result = await pool.query('SELECT COUNT(*) FROM users');
-        if (result.rows[0].count === '0') {
+        if (process.env.NODE_ENV !== 'production' && result.rows[0].count === '0') {
             const testUsers = [
                 { username: "test", password: "1" },
                 { username: "test2", password: "2" },
@@ -43,12 +47,11 @@ async function initDatabase() {
                 const hash = await bcrypt.hash(user.password, 10);
                 await pool.query(
                     'INSERT INTO users (username, password_hash) VALUES ($1, $2)',
-                    [user.username, hash]
+                    [username, hash]
                 );
             }
             console.log('Testnutzer erstellt');
         }
-
         console.log('Datenbank initialisiert');
     } catch (err) {
         console.error('Datenbankfehler:', err);
@@ -187,26 +190,26 @@ app.delete("/logout", (req, res) => {
 app.delete("/game/:gameId/resign", requireAuth, async (req, res) => {
     const game = games.get(req.params.gameId);
     if (!game) return res.sendStatus(404);
-    
-    const color = req.session.userId === game.player1Id ? "black" : 
-                  req.session.userId === game.player2Id ? "white" : null;
+
+    const color = req.session.userId === game.player1Id ? "black" :
+        req.session.userId === game.player2Id ? "white" : null;
     if (!color) return res.sendStatus(403);
 
     game.stopTimer();
     const winner = color === "black" ? "white" : "black";
     const resignData = JSON.stringify({ type: "resigned", loser: color, winner });
-    
+
     if (game.player1?.readyState === WebSocket.OPEN) game.player1.send(resignData);
     if (game.player2?.readyState === WebSocket.OPEN) game.player2.send(resignData);
-    
+
     if (game.player1) game.player1.currentGame = null;
     if (game.player2) game.player2.currentGame = null;
-    
+
     setTimeout(() => {
         games.delete(game.id);
         broadcastGamesList();
     }, 500);
-    
+
     res.sendStatus(200);
 });
 

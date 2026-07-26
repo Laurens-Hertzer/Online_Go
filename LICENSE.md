@@ -1,4 +1,4 @@
-Copyright (c) 2026 Laurens Alexander Hertzer
+Copyright (c) 2026 Laurens 
 
 All rights reserved.
 
