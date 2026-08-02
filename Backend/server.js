@@ -8,6 +8,8 @@ const cors = require("cors");
 const path = require("path");
 const WebSocket = require("ws");
 const bcrypt = require("bcrypt");
+const Filter = require("bad-words"); 
+const filter = new Filter();  
 
 //Definitions
 const app = express();
@@ -106,6 +108,9 @@ app.post("/register", async (req, res) => {
     }
     if (password.length < 8) {
         return res.status(422).json({ error: "Passwort muss mindestens 8 Zeichen lang sein." });
+    }
+    if (filter.isProfane(username)) {      
+        return res.status(422).json({ error: "Dieser Username ist nicht erlaubt." });
     }
 
     try {
