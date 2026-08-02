@@ -8,8 +8,8 @@ const cors = require("cors");
 const path = require("path");
 const WebSocket = require("ws");
 const bcrypt = require("bcrypt");
-const Filter = require("bad-words"); 
-const filter = new Filter();  
+const { Filter } = require("bad-words");
+const filter = new Filter(); 
 
 //Definitions
 const app = express();
