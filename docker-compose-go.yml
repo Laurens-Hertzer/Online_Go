@@ -1,6 +1,6 @@
 services:
     go_backend:
-        build: 
+        build:
             context: https://github.com/Laurens-Hertzer/Online_Go.git#main
             dockerfile: Dockerfile
         container_name: online_go_app
@@ -41,7 +41,8 @@ services:
         restart: always
         ports:
             - 8081:8080
-
+        networks:
+            - internal_net_go
 volumes:
     postgres_data:
 
