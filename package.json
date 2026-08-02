@@ -23,6 +23,7 @@
     "start": "node Backend/server.js"
   },
   "dependencies": {
+    "bad-words": "^4.1.5",
     "bcrypt": "^5.1.1",
     "connect-pg-simple": "^9.0.1",
     "cors": "^2.8.6",
