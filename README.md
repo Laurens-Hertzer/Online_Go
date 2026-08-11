@@ -66,18 +66,7 @@ docker compose -f docker-compose-go.yml up -d --build
 
 ## Lessons Learned
 
-This project is my introduction into WebSockets and several other technologies used in production code, as for example CORS (Cross-Origin Resource Sharing), deeper knowledge in used practices environment variables/.env files, package.json and gitignore. 
-
-Lessons Learned
-This project served as a deep dive into real-time web applications, containerization, and self-hosting infrastructure:
-
-WebSockets for real-time game interaction and state synchronization.
-
-Containerization using Docker, Docker Compose, and multi-stage builds.
-
-Self-Hosting & Deployment Management via Portainer, reverse proxies (Caddy), and secure environment configurations.
-
-Authentication Flow with Express-Session and PostgreSQL store.
+This project is my introduction into WebSockets and several other technologies, as for example CORS (Cross-Origin Resource Sharing), deeper knowledge in used practices environment variables/.env files, package.json and gitignore. 
 
 ## Feedback/Support
 
