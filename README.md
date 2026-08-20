@@ -74,6 +74,7 @@ If you have any feedback or need support, please reach out over GitHub Issues.
 
 ## Roadmap
 
+- API rate limiting
 - Proper account page for account personalization (and deletion)
 - Design improvements (design framework, Canvas API)
 - Chat
