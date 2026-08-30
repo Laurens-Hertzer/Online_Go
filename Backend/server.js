@@ -97,6 +97,24 @@ function requireAuth(req, res, next) {
     next();
 }
 
+const rateLimit = require("express-rate-limit");
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: "Zu viele Anfragen, bitte später erneut versuchen." }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 10, 
+  message: { error: "Zu viele Login-/Registrierungsversuche. Bitte warte 15 Minuten." }
+});
+
+app.use("/login", authLimiter);
+app.use("/register", authLimiter);
+app.use("/game/", apiLimiter);
+
 app.post("/register", async (req, res) => {
     const { username, password } = req.body;
 
@@ -389,12 +407,33 @@ class Game {
     }
 }
 
+function createWsLimiter(maxMessages = 10, windowMs = 1000) {
+  let count = 0;
+  let lastReset = Date.now();
+
+  return () => {
+    const now = Date.now();
+    if (now - lastReset > windowMs) {
+      count = 0;
+      lastReset = now;
+    }
+    count++;
+    return count <= maxMessages;
+  };
+}
+
 
 wss.on("connection", (ws) => {
     console.log("[WS] Verbunden:", ws.username);
     sendGamesList(ws);
+    ws.isAllowed = createWsLimiter(10, 1000);
 
     ws.on("message", (msg) => {
+        if (!ws.isAllowed()) {
+            ws.send(JSON.stringify({ type: "error", message: "Zu viele Anfragen (Rate Limit)." }));
+            return;
+        }
+
         let data;
         try {
             data = JSON.parse(msg);
