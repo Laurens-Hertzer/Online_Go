@@ -116,8 +116,8 @@ app.use("/login", authLimiter);
 app.use("/register", authLimiter);
 app.use("/game/", apiLimiter);
 
-app.get("/status", async (req, res) => {
-    res.json({ status: "ok", user: req.session.username || null });
+app.get("/status", async (res) => {
+    res.status(200).json({message: "Server läuft" });
 });
 
 app.post("/register", async (req, res) => {
