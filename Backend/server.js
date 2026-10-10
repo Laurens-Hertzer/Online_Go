@@ -84,8 +84,13 @@ const sessionMiddleware = session({
     },
 });
 
+const allowedOrigins = [
+    process.env.ALLOWED_ORIGIN, 
+    process.env.ALLOWED_ORIGIN_STATUS 
+].filter(Boolean); 
+
 app.use(cors({
-    origin: [process.env.ALLOWED_ORIGIN || "http://localhost:3000", process.env.ALLOWED_ORIGIN_STATUS || "http://localhost:3000"],
+    origin: allowedOrigins,
     credentials: true
 }));
 
