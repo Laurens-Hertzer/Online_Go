@@ -81,7 +81,7 @@ const sessionMiddleware = session({
 });
 
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
+    origin: [process.env.ALLOWED_ORIGIN || "http://localhost:3000", process.env.ALLOWED_ORIGIN_STATUS || "http://localhost:3000"],
     credentials: true
 }));
 
@@ -111,9 +111,14 @@ const authLimiter = rateLimit({
   message: { error: "Zu viele Login-/Registrierungsversuche. Bitte warte 15 Minuten." }
 });
 
+app.use("/status", apiLimiter);
 app.use("/login", authLimiter);
 app.use("/register", authLimiter);
 app.use("/game/", apiLimiter);
+
+app.get("/status", async (req, res) => {
+    res.json({ status: "ok", user: req.session.username || null });
+});
 
 app.post("/register", async (req, res) => {
     const { username, password } = req.body;
