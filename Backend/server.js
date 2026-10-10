@@ -1,5 +1,8 @@
 //Imports
-require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
+require("dotenv").config({ 
+    path: require("path").join(__dirname, "../.env"),
+    override: false
+});
 const express = require("express");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
