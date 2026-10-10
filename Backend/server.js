@@ -20,7 +20,8 @@ if (!process.env.SESSION_SECRET) {
     process.exit(1);
 }
 //Proxy-Config for Docker (once Render)
-app.set("trust proxy", true);
+// Proxy set to 1 so that express only trusts my proxy
+app.set("trust proxy", 1);
 
 //DB
 const pool = new Pool({
@@ -116,8 +117,8 @@ app.use("/login", authLimiter);
 app.use("/register", authLimiter);
 app.use("/game/", apiLimiter);
 
-app.get("/status", async (res) => {
-    res.status(200).json({message: "Server läuft" });
+app.get('/status', (req, res) => {
+    res.status(200).json({ message: "Server läuft" });
 });
 
 app.post("/register", async (req, res) => {
