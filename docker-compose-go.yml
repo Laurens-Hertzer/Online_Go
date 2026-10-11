@@ -29,7 +29,9 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - NODE_ENV=${NODE_ENV}
       - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+      - ALLOWED_ORIGIN_STATUS=${ALLOWED_ORIGIN_STATUS}
       - DB_SSL=${DB_SSL}
+      - PORT=${PORT}
 
     depends_on:
       postgres:

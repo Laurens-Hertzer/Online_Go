@@ -94,8 +94,6 @@ app.use(cors({
     credentials: true
 }));
 
-console.log("[CORS] Erlaubte Origins:", allowedOrigins);
-
 //Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
